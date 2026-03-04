@@ -130,6 +130,22 @@ td{padding:10px 16px;font-size:13px;color:var(--text);vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{padding:40px;text-align:center;color:var(--muted);font-size:13px}
 .empty-ico{font-size:30px;margin-bottom:8px}
+.btn-danger{padding:8px 18px;background:rgba(196,74,74,.1);color:var(--danger);border:1.5px solid rgba(196,74,74,.2);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:.14s;margin-right:auto}
+.btn-danger:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(44,31,23,.55);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.confirm-overlay.open{display:flex}
+.confirm-box{background:var(--warm);border-radius:14px;width:380px;max-width:92vw;box-shadow:var(--sh2);animation:slideUp .2s ease;overflow:hidden}
+.confirm-head{padding:20px 22px 0;text-align:center}
+.confirm-ico{font-size:36px;margin-bottom:10px}
+.confirm-title{font-family:'Playfair Display',serif;font-size:17px;color:var(--dark);margin-bottom:8px}
+.confirm-sub{font-size:13px;color:var(--muted);line-height:1.5;padding:0 8px}
+.confirm-name{font-weight:600;color:var(--danger)}
+.confirm-foot{padding:20px 22px;display:flex;gap:10px;justify-content:center}
+.btn-confirm-cancel{padding:9px 24px;background:var(--sand);color:var(--brown);border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:.14s}
+.btn-confirm-cancel:hover{background:var(--tan);color:#fff}
+.btn-confirm-delete{padding:9px 24px;background:var(--danger);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.14s}
+.btn-confirm-delete:hover{background:#a83838}
+.btn-confirm-delete.loading-del{opacity:.6;pointer-events:none}
 </style>
 </head>
 <body>
@@ -286,6 +302,21 @@ td{padding:10px 16px;font-size:13px;color:var(--text);vertical-align:middle}
 
 <div class="toast" id="toast"><span id="t-ico">✓</span><span id="t-msg">Sauvegardé</span></div>
 
+<!-- CONFIRM DELETE MODAL -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-head">
+      <div class="confirm-ico">🗑</div>
+      <div class="confirm-title">Supprimer définitivement ?</div>
+      <div class="confirm-sub">Tu es sur le point de supprimer <span class="confirm-name" id="confirm-name"></span>. Cette action est <strong>irréversible</strong>.</div>
+    </div>
+    <div class="confirm-foot">
+      <button class="btn-confirm-cancel" onclick="closeConfirm()">Annuler</button>
+      <button class="btn-confirm-delete" id="confirm-delete-btn" onclick="executeDelete()">Oui, supprimer</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SURL='https://rofkgmwjggvxlgrdnsyt.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvZmtnbXdqZ2d2eGxncmRuc3l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MzA2MTgsImV4cCI6MjA4NzUwNjYxOH0.6nlnX-0wUlID-630j5fOyveEAG0Lrp2gWhgGMRKpmNk';
@@ -389,7 +420,7 @@ function openMsgModal(m){
   h+='<div class="drow"><div class="dlbl">Traitement</div><div class="dval" style="display:flex;gap:16px">'+ckHtml('contact_leads',m.id,'seen',m.seen,'Vu','seen')+ckHtml('contact_leads',m.id,'done',m.done,'Fait','done')+'</div></div>';
   h+='<div class="drow"><div class="dlbl">Note</div><div class="dval"><textarea class="ta" id="m-note">'+(m.notes||'')+'</textarea></div></div>';
   document.getElementById('m-body').innerHTML=h;
-  document.getElementById('m-foot').innerHTML='<button class="btn-s" onclick="closeModal()">Fermer</button><button class="btn-p" onclick="saveNote(\'contact_leads\',\''+m.id+'\')">💾 Sauvegarder note</button>';
+  document.getElementById('m-foot').innerHTML='<button class="btn-danger" onclick="confirmDelete(\'contact_leads\',\''+m.id+'\',\''+escape(m.name||m.first_name||'ce message')+'\')">🗑 Supprimer</button><button class="btn-s" onclick="closeModal()">Fermer</button><button class="btn-p" onclick="saveNote(\'contact_leads\',\''+m.id+'\')">💾 Sauvegarder note</button>';
   document.getElementById('overlay').classList.add('open');
 }
 
@@ -412,7 +443,7 @@ function openAudModal(a){
   h+='<div class="drow"><div class="dlbl">Traitement</div><div class="dval" style="display:flex;gap:16px">'+ckHtml('audit_requests',a.id,'seen',a.seen,'Vu','seen')+ckHtml('audit_requests',a.id,'done',a.done,'Fait','done')+'</div></div>';
   h+='<div class="drow"><div class="dlbl">Note interne</div><div class="dval"><textarea class="ta" id="m-note">'+(a.internal_notes||a.notes||'')+'</textarea></div></div>';
   document.getElementById('m-body').innerHTML=h;
-  document.getElementById('m-foot').innerHTML='<button class="btn-s" onclick="closeModal()">Fermer</button><button class="btn-p" onclick="saveAud(\''+a.id+'\')">💾 Sauvegarder</button>';
+  document.getElementById('m-foot').innerHTML='<button class="btn-danger" onclick="confirmDelete(\'audit_requests\',\''+a.id+'\',\''+escape(a.name||a.business_name||'cet audit')+'\')">🗑 Supprimer</button><button class="btn-s" onclick="closeModal()">Fermer</button><button class="btn-p" onclick="saveAud(\''+a.id+'\')">💾 Sauvegarder</button>';
   document.getElementById('overlay').classList.add('open');
 }
 async function saveAud(id){
@@ -438,7 +469,7 @@ function openOrdModal(o){
   h+='<div class="drow"><div class="dlbl">Traitement</div><div class="dval" style="display:flex;gap:16px">'+ckHtml('orders',o.id,'seen',o.seen,'Vu','seen')+ckHtml('orders',o.id,'done',o.done,'Fait','done')+'</div></div>';
   h+='<div class="drow"><div class="dlbl">Note interne</div><div class="dval"><textarea class="ta" id="m-note">'+(o.notes||'')+'</textarea></div></div>';
   document.getElementById('m-body').innerHTML=h;
-  document.getElementById('m-foot').innerHTML='<button class="btn-s" onclick="closeModal()">Fermer</button><button class="btn-p" onclick="saveOrd(\''+o.id+'\')">💾 Sauvegarder</button>';
+  document.getElementById('m-foot').innerHTML='<button class="btn-danger" onclick="confirmDelete(\'orders\',\''+o.id+'\',\''+escape(o.business_name||o.name||'cette commande')+'\')">🗑 Supprimer</button><button class="btn-s" onclick="closeModal()">Fermer</button><button class="btn-p" onclick="saveOrd(\''+o.id+'\')">💾 Sauvegarder</button>';
   document.getElementById('overlay').classList.add('open');
 }
 async function saveOrd(id){
@@ -467,7 +498,7 @@ function openOnbModal(o){
   h+='<div class="drow"><div class="dlbl">Traitement</div><div class="dval" style="display:flex;gap:16px">'+ckHtml('onboarding',o.id,'seen',o.seen,'Vu','seen')+ckHtml('onboarding',o.id,'done',o.done,'Fait','done')+'</div></div>';
   h+='<div class="drow"><div class="dlbl">Note interne</div><div class="dval"><textarea class="ta" id="m-note">'+(o.internal_notes||o.notes||'')+'</textarea></div></div>';
   document.getElementById('m-body').innerHTML=h;
-  document.getElementById('m-foot').innerHTML='<button class="btn-s" onclick="closeModal()">Fermer</button><button class="btn-p" onclick="saveOnb(\''+o.id+'\')">💾 Sauvegarder</button>';
+  document.getElementById('m-foot').innerHTML='<button class="btn-danger" onclick="confirmDelete(\'onboarding\',\''+o.id+'\',\''+escape(o.business_name||o.name||'cet onboarding')+'\')">🗑 Supprimer</button><button class="btn-s" onclick="closeModal()">Fermer</button><button class="btn-p" onclick="saveOnb(\''+o.id+'\')">💾 Sauvegarder</button>';
   document.getElementById('overlay').classList.add('open');
 }
 async function saveOnb(id){
@@ -547,6 +578,45 @@ async function ensureColumns(){
   // silently try to add columns if they don't exist — will fail gracefully
   try{ await db.rpc('exec',{sql:"ALTER TABLE contact_leads ADD COLUMN IF NOT EXISTS seen boolean DEFAULT false, ADD COLUMN IF NOT EXISTS done boolean DEFAULT false, ADD COLUMN IF NOT EXISTS notes text"}); }catch(e){}
 }
+
+
+// ── DELETE WITH CONFIRMATION ──────────────────────────────
+let _deleteTarget = { table: null, id: null };
+
+function confirmDelete(table, id, name) {
+  _deleteTarget = { table, id };
+  document.getElementById('confirm-name').textContent = decodeURIComponent(name);
+  document.getElementById('confirm-overlay').classList.add('open');
+  closeModal();
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  _deleteTarget = { table: null, id: null };
+}
+
+async function executeDelete() {
+  const { table, id } = _deleteTarget;
+  if (!table || !id) return;
+  const btn = document.getElementById('confirm-delete-btn');
+  btn.classList.add('loading-del');
+  btn.textContent = 'Suppression…';
+  const { error } = await db.from(table).delete().eq('id', id);
+  btn.classList.remove('loading-del');
+  btn.textContent = 'Oui, supprimer';
+  closeConfirm();
+  if (!error) {
+    toast('Supprimé ✓', '🗑');
+    await loadAll(true);
+  } else {
+    toast('Erreur: ' + error.message, '✕');
+  }
+}
+
+// Close confirm if clicking outside
+document.getElementById('confirm-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
+});
 
 loadAll();
 </script>

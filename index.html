@@ -146,9 +146,41 @@ td{padding:10px 16px;font-size:13px;color:var(--text);vertical-align:middle}
 .btn-confirm-delete{padding:9px 24px;background:var(--danger);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.14s}
 .btn-confirm-delete:hover{background:#a83838}
 .btn-confirm-delete.loading-del{opacity:.6;pointer-events:none}
+
+/* ── LOGIN SCREEN ── */
+#login-screen{position:fixed;inset:0;background:var(--dark);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column}
+#login-screen.hidden{display:none}
+.login-box{width:340px;max-width:92vw;text-align:center}
+.login-logo{font-family:'Playfair Display',serif;font-size:32px;color:var(--tan);letter-spacing:.06em;margin-bottom:6px}
+.login-sub{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:36px}
+.login-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;display:block;margin-bottom:8px}
+.login-input{width:100%;padding:13px 16px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;color:#fff;outline:none;transition:.2s;letter-spacing:.08em}
+.login-input:focus{border-color:var(--rust);background:rgba(255,255,255,.09)}
+.login-input::placeholder{color:rgba(255,255,255,.2);letter-spacing:.04em}
+.login-btn{width:100%;margin-top:14px;padding:13px;background:var(--rust);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;letter-spacing:.04em}
+.login-btn:hover{background:var(--rust-d)}
+.login-error{margin-top:12px;font-size:12.5px;color:#e07070;opacity:0;transition:opacity .2s;min-height:18px}
+.login-error.show{opacity:1}
+.login-dots{display:flex;justify-content:center;gap:6px;margin-bottom:32px}
+.login-dot{width:5px;height:5px;border-radius:50%;background:var(--rust);opacity:.3}
+.login-dot:nth-child(2){opacity:.6}.login-dot:nth-child(3){opacity:1}
 </style>
 </head>
 <body>
+
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Mizra</div>
+    <div class="login-sub">Back Office</div>
+    <div class="login-dots"><div class="login-dot"></div><div class="login-dot"></div><div class="login-dot"></div></div>
+    <label class="login-label" for="pwd-input">Mot de passe</label>
+    <input class="login-input" type="password" id="pwd-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPwd()">
+    <button class="login-btn" onclick="checkPwd()">Accéder →</button>
+    <div class="login-error" id="login-error">Mot de passe incorrect</div>
+  </div>
+</div>
 
 <aside class="sb">
   <div class="sb-logo">
@@ -618,7 +650,41 @@ document.getElementById('confirm-overlay').addEventListener('click', function(e)
   if (e.target === this) closeConfirm();
 });
 
-loadAll();
+// loadAll() is now called after auth check
+
+// ── AUTH ─────────────────────────────────────────────────
+const PWD_HASH = '325153c5e0efd815d4f8d5238dfcf06888e327c2251f0d5168b74c227ff60662'; // Mizra2026!
+
+async function hashPwd(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPwd() {
+  const val = document.getElementById('pwd-input').value;
+  const hash = await hashPwd(val);
+  if (hash === PWD_HASH) {
+    sessionStorage.setItem('mizra_auth', '1');
+    document.getElementById('login-screen').classList.add('hidden');
+    loadAll();
+  } else {
+    const err = document.getElementById('login-error');
+    err.classList.add('show');
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+    setTimeout(() => err.classList.remove('show'), 2500);
+  }
+}
+
+// Check session on load
+if (sessionStorage.getItem('mizra_auth') === '1') {
+  document.getElementById('login-screen').classList.add('hidden');
+  loadAll();
+} else {
+  setTimeout(() => document.getElementById('pwd-input').focus(), 100);
+}
+
+
 </script>
 </body>
 </html>

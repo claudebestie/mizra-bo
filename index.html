@@ -371,7 +371,7 @@ td{padding:10px 16px;font-size:13px;color:var(--text);vertical-align:middle}
       </div>
       <div class="tcard">
         <div class="thead"><div class="ttitle">Commandes</div><div style="display:flex;align-items:center;gap:8px"><span class="tcnt" id="ord-cnt">0</span><button class="btn-s" style="padding:4px 12px;font-size:11.5px" onclick="exportData('orders')">⬇ Export</button></div></div>
-        <table><thead><tr><th>N°</th><th>Client</th><th>Email</th><th>Forfait</th><th>Montant</th><th>Statut</th><th>Vu</th><th>Fait</th><th>Date</th><th></th></tr></thead>
+        <table><thead><tr><th>N°</th><th>Client</th><th>Email</th><th>Forfait</th><th>Montant</th><th>Suivi</th><th>Statut</th><th>Vu</th><th>Fait</th><th>Date</th><th></th></tr></thead>
         <tbody id="ord-body"><tr><td colspan="9"><div class="loading"><div class="spin"></div><div>Chargement…</div></div></td></tr></tbody></table>
       </div>
     </div>
@@ -387,7 +387,7 @@ td{padding:10px 16px;font-size:13px;color:var(--text);vertical-align:middle}
       </div>
       <div class="tcard">
         <div class="thead"><div class="ttitle">Onboarding clients</div><div style="display:flex;align-items:center;gap:8px"><span class="tcnt" id="onb-cnt">0</span><button class="btn-s" style="padding:4px 12px;font-size:11.5px" onclick="exportData('onboarding')">⬇ Export</button><button class="btn-s" style="padding:4px 12px;font-size:11.5px;background:rgba(196,113,74,.1);color:var(--rust)" onclick="exportData('both')">⬇ Tout exporter</button></div></div>
-        <table><thead><tr><th>N°</th><th>Restaurant</th><th>Email</th><th>Type</th><th>Montant</th><th>Statut</th><th>Vu</th><th>Fait</th><th>Date</th><th></th></tr></thead>
+        <table><thead><tr><th>N°</th><th>Suivi</th><th>Restaurant</th><th>Email</th><th>Type</th><th>Montant</th><th>Statut</th><th>Vu</th><th>Fait</th><th>Date</th><th></th></tr></thead>
         <tbody id="onb-body"><tr><td colspan="9"><div class="loading"><div class="spin"></div><div>Chargement…</div></div></td></tr></tbody></table>
       </div>
     </div>
@@ -591,6 +591,7 @@ function openOrdModal(o){
       ['Addons',addonsStr!=='—'?addonsStr:null],
       ['Total addons',o.addons_total?'₪'+fmtN(o.addons_total):null],
       ['TOTAL',o.total_price!=null?'<strong style="font-size:15px;color:var(--rust)">₪'+fmtN(o.total_price)+'</strong>':null],
+      ['N° suivi','<input class="sel-m" style="width:100%" type="text" id="m-tracking" placeholder="ex: TRK-2026-001" value="'+(o.tracking_number||'')+'">'],
     ]},
     {title:'💳 Paiement', rows:[
       ['Méthode',o.payment_method],
@@ -628,7 +629,7 @@ function openOrdModal(o){
   document.getElementById('m-foot').innerHTML=
     '<button class="btn-danger" onclick="confirmDelete(\'orders\',\''+o.id+'\',\''+escape(o.payer_name||'cette commande')+'\')">🗑 Supprimer</button>'+
     '<button class="btn-s" onclick="closeModal()">Fermer</button>'+
-    '<button class="btn-invoice" onclick="generateInvoice('+esc(o)+');closeModal()">🧾 Facture</button>'+'<button class="btn-promote" onclick="promoteToOnboarding('+esc(o)+')">→ Onboarding</button>'+
+    '<button class="btn-invoice" onclick="generateInvoice('+esc(o)+')">🧾 Facture</button>'+'<button class="btn-promote" onclick="promoteToOnboarding('+esc(o)+')">→ Onboarding</button>'+
     '<button class="btn-p" onclick="saveOrd(\''+o.id+'\')">💾 Sauvegarder</button>';
   document.getElementById('overlay').classList.add('open');
 }
@@ -636,7 +637,8 @@ async function saveOrd(id){
   const s=document.getElementById('m-status').value;
   const n=document.getElementById('m-note').value;
   const wt=document.getElementById('m-wetransfer')?document.getElementById('m-wetransfer').value:'';
-  const{error}=await db.from('orders').update({status:s,notes:n,wetransfer_url:wt}).eq('id',id);
+  const trk=document.getElementById('m-tracking')?document.getElementById('m-tracking').value:'';
+  const{error}=await db.from('orders').update({status:s,notes:n,wetransfer_url:wt,tracking_number:trk}).eq('id',id);
   if(!error){toast('Commande mise à jour ✓');closeModal();loadOrds();}else toast('Erreur: '+error.message,'✕');
 }
 
@@ -655,6 +657,7 @@ function renderOnbs(){
     const montant=linked&&linked.total_price!=null?'₪'+fmtN(linked.total_price):'—';
     return '<tr style="'+(o.seen?'':'background:rgba(90,140,107,.04)')+'" onclick="openOnbModal('+esc(o)+')">'
       +'<td style="font-size:11px;color:var(--muted);font-family:monospace">'+ordNum+'</td>'
+      +'<td>'+(o.tracking_number?'<span style="font-family:monospace;font-size:11px;background:rgba(74,122,155,.1);color:var(--info);padding:2px 7px;border-radius:4px">'+o.tracking_number+'</span>':'<span style="color:var(--sand)">—</span>')+'</td>'
       +'<td class="tn">'+(o.restaurant_name||o.business_name||'—')+'</td>'
       +'<td class="te">'+(o.email||'—')+'</td>'
       +'<td>'+(o.restaurant_type||'—')+'</td>'
@@ -674,6 +677,7 @@ function openOnbModal(o){
   const sections=[
     {title:'🏪 Établissement', rows:[
       ['N° commande',ordNum?'<span style="font-family:monospace;font-weight:700;color:var(--rust)">'+ordNum+'</span>':null],
+      ['N° suivi','<input class="sel-m" style="width:100%" type="text" id="m-tracking" placeholder="ex: TRK-2026-001" value="'+(o.tracking_number||'')+'">'],
       ['Nom restaurant',o.restaurant_name],
       ['Type',o.restaurant_type],
       ['Adresse',o.full_address],
@@ -730,7 +734,8 @@ function openOnbModal(o){
 }
 async function saveOnb(id){
   const s=document.getElementById('m-status').value,n=document.getElementById('m-note').value;
-  const{error}=await db.from('onboarding').update({status:s,internal_notes:n}).eq('id',id);
+  const trk=document.getElementById('m-tracking')?document.getElementById('m-tracking').value:'';
+  const{error}=await db.from('onboarding').update({status:s,internal_notes:n,tracking_number:trk}).eq('id',id);
   if(!error){toast('Onboarding mis à jour ✓');closeModal();loadOnbs();}else toast('Erreur: '+error.message,'✕');
 }
 
@@ -1018,6 +1023,7 @@ function generateInvoice(o) {
         <div class="inv-meta-row">Date : <span>${today}</span></div>
         <div class="inv-meta-row">Échéance : <span>${dueDateStr}</span></div>
         <div class="inv-meta-row">N° commande : <span style="font-family:monospace">#${o.id.slice(0,6).toUpperCase()}</span></div>
+        ${o.tracking_number?`<div class="inv-meta-row">N° suivi : <span style="font-family:monospace">${o.tracking_number}</span></div>`:''}
         <div style="margin-top:10px"><span class="inv-status-badge ${psCls}">${psLabel}</span></div>
       </div>
     </div>
@@ -1083,6 +1089,7 @@ function generateInvoice(o) {
     </div>
   `;
 
+  closeModal();
   document.getElementById('invoice-overlay').classList.add('open');
 }
 

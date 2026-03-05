@@ -132,6 +132,10 @@ td{padding:10px 16px;font-size:13px;color:var(--text);vertical-align:middle}
 .empty-ico{font-size:30px;margin-bottom:8px}
 .btn-danger{padding:8px 18px;background:rgba(196,74,74,.1);color:var(--danger);border:1.5px solid rgba(196,74,74,.2);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:.14s;margin-right:auto}
 .btn-danger:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn-invoice{padding:8px 16px;background:rgba(74,122,155,.1);color:var(--info);border:1.5px solid rgba(74,122,155,.25);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;transition:.14s}
+.btn-invoice:hover{background:var(--info);color:#fff;border-color:var(--info)}
+.btn-promote{padding:8px 18px;background:rgba(90,140,107,.12);color:var(--ok);border:1.5px solid rgba(90,140,107,.25);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;transition:.14s}
+.btn-promote:hover{background:var(--ok);color:#fff;border-color:var(--ok)}
 .confirm-overlay{display:none;position:fixed;inset:0;background:rgba(44,31,23,.55);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .confirm-overlay.open{display:flex}
 .confirm-box{background:var(--warm);border-radius:14px;width:380px;max-width:92vw;box-shadow:var(--sh2);animation:slideUp .2s ease;overflow:hidden}
@@ -164,6 +168,73 @@ td{padding:10px 16px;font-size:13px;color:var(--text);vertical-align:middle}
 .login-dots{display:flex;justify-content:center;gap:6px;margin-bottom:32px}
 .login-dot{width:5px;height:5px;border-radius:50%;background:var(--rust);opacity:.3}
 .login-dot:nth-child(2){opacity:.6}.login-dot:nth-child(3){opacity:1}
+
+/* ── INVOICE ── */
+#invoice-overlay{display:none;position:fixed;inset:0;background:rgba(44,31,23,.6);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+#invoice-overlay.open{display:flex}
+.inv-wrapper{width:680px;max-width:96vw;max-height:92vh;overflow-y:auto;border-radius:14px;box-shadow:0 8px 48px rgba(0,0,0,.3);background:#fff}
+.inv-toolbar{background:var(--dark);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;border-radius:14px 14px 0 0}
+.inv-toolbar-title{color:var(--tan);font-size:13px;font-weight:500}
+.inv-toolbar-btns{display:flex;gap:8px}
+.inv-btn-print{padding:7px 16px;background:var(--rust);color:#fff;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:.14s}
+.inv-btn-print:hover{background:var(--rust-d)}
+.inv-btn-close{padding:7px 14px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:.14s}
+.inv-btn-close:hover{background:rgba(255,255,255,.2);color:#fff}
+
+/* INVOICE DOCUMENT */
+#invoice-doc{padding:52px 56px;background:#fff;font-family:'DM Sans',sans-serif;color:#1a1a1a;font-size:13.5px;line-height:1.6}
+.inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:44px;padding-bottom:28px;border-bottom:2px solid #f0ebe4}
+.inv-brand .inv-name{font-family:'Playfair Display',serif;font-size:26px;color:#2C1F17;letter-spacing:.04em;font-weight:600}
+.inv-brand .inv-tagline{font-size:11px;color:#9B7B68;letter-spacing:.12em;text-transform:uppercase;margin-top:3px}
+.inv-brand .inv-addr{font-size:12px;color:#6B4C3B;margin-top:12px;line-height:1.7}
+.inv-meta{text-align:right}
+.inv-number{font-size:22px;font-weight:700;color:#C4714A;font-family:'Playfair Display',serif;letter-spacing:.04em}
+.inv-meta-row{font-size:12px;color:#9B7B68;margin-top:4px}
+.inv-meta-row span{color:#3D2B20;font-weight:500}
+
+.inv-parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:36px}
+.inv-party-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9B7B68;margin-bottom:8px}
+.inv-party-name{font-size:15px;font-weight:600;color:#2C1F17;margin-bottom:4px}
+.inv-party-detail{font-size:12.5px;color:#6B4C3B;line-height:1.7}
+
+.inv-table{width:100%;border-collapse:collapse;margin-bottom:28px}
+.inv-table thead th{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9B7B68;padding:10px 14px;text-align:left;background:#faf7f2;border-bottom:1px solid #e8ddd0}
+.inv-table thead th:last-child{text-align:right}
+.inv-table tbody td{padding:13px 14px;border-bottom:1px solid #f5f0ea;font-size:13px;color:#3D2B20;vertical-align:top}
+.inv-table tbody td:last-child{text-align:right;font-weight:500}
+.inv-table tbody tr:last-child td{border-bottom:none}
+.inv-item-name{font-weight:600;color:#2C1F17}
+.inv-item-desc{font-size:11.5px;color:#9B7B68;margin-top:2px}
+
+.inv-totals{display:flex;justify-content:flex-end;margin-bottom:36px}
+.inv-totals-box{width:260px}
+.inv-total-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #f0ebe4;color:#6B4C3B}
+.inv-total-row:last-child{border-bottom:none;padding-top:12px;margin-top:4px}
+.inv-total-row.grand{font-size:17px;font-weight:700;color:#2C1F17}
+.inv-total-row.grand .inv-total-val{color:#C4714A}
+
+.inv-payment{background:#faf7f2;border:1px solid #e8ddd0;border-radius:10px;padding:18px 20px;margin-bottom:28px}
+.inv-payment-title{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9B7B68;margin-bottom:12px}
+.inv-bank-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px}
+.inv-bank-row{font-size:12px;color:#6B4C3B}
+.inv-bank-row strong{color:#2C1F17;display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:1px}
+
+.inv-footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:20px;border-top:1px solid #e8ddd0}
+.inv-conditions{font-size:11.5px;color:#9B7B68;max-width:320px;line-height:1.6}
+.inv-vat{text-align:right;font-size:11px;color:#9B7B68}
+.inv-vat .inv-vat-num{font-size:13px;font-weight:600;color:#3D2B20;display:block}
+.inv-status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.06em}
+.inv-paid{background:rgba(90,140,107,.12);color:#5A8C6B}
+.inv-pending{background:rgba(196,154,58,.12);color:#C49A3A}
+.inv-deposit{background:rgba(196,113,74,.12);color:#C4714A}
+
+@media print{
+  #invoice-overlay{display:block!important;position:static;background:none}
+  .inv-toolbar{display:none!important}
+  .inv-wrapper{box-shadow:none;border-radius:0;max-height:none;overflow:visible}
+  #invoice-doc{padding:32px 40px}
+  body > *:not(#invoice-overlay){display:none!important}
+}
 </style>
 </head>
 <body>
@@ -299,8 +370,8 @@ td{padding:10px 16px;font-size:13px;color:var(--text);vertical-align:middle}
         <button class="chip" onclick="filterOrd('completed',this)">Terminé</button>
       </div>
       <div class="tcard">
-        <div class="thead"><div class="ttitle">Commandes</div><span class="tcnt" id="ord-cnt">0</span></div>
-        <table><thead><tr><th>Client</th><th>Email</th><th>Forfait</th><th>Montant</th><th>Statut</th><th>Vu</th><th>Fait</th><th>Date</th><th></th></tr></thead>
+        <div class="thead"><div class="ttitle">Commandes</div><div style="display:flex;align-items:center;gap:8px"><span class="tcnt" id="ord-cnt">0</span><button class="btn-s" style="padding:4px 12px;font-size:11.5px" onclick="exportData('orders')">⬇ Export</button></div></div>
+        <table><thead><tr><th>N°</th><th>Client</th><th>Email</th><th>Forfait</th><th>Montant</th><th>Statut</th><th>Vu</th><th>Fait</th><th>Date</th><th></th></tr></thead>
         <tbody id="ord-body"><tr><td colspan="9"><div class="loading"><div class="spin"></div><div>Chargement…</div></div></td></tr></tbody></table>
       </div>
     </div>
@@ -315,8 +386,8 @@ td{padding:10px 16px;font-size:13px;color:var(--text);vertical-align:middle}
         <button class="chip" onclick="filterOnb('completed',this)">Terminé</button>
       </div>
       <div class="tcard">
-        <div class="thead"><div class="ttitle">Onboarding clients (post-paiement)</div><span class="tcnt" id="onb-cnt">0</span></div>
-        <table><thead><tr><th>Business</th><th>Email</th><th>Type</th><th>Forfait</th><th>Statut</th><th>Vu</th><th>Fait</th><th>Date</th><th></th></tr></thead>
+        <div class="thead"><div class="ttitle">Onboarding clients</div><div style="display:flex;align-items:center;gap:8px"><span class="tcnt" id="onb-cnt">0</span><button class="btn-s" style="padding:4px 12px;font-size:11.5px" onclick="exportData('onboarding')">⬇ Export</button><button class="btn-s" style="padding:4px 12px;font-size:11.5px;background:rgba(196,113,74,.1);color:var(--rust)" onclick="exportData('both')">⬇ Tout exporter</button></div></div>
+        <table><thead><tr><th>N°</th><th>Restaurant</th><th>Email</th><th>Type</th><th>Montant</th><th>Statut</th><th>Vu</th><th>Fait</th><th>Date</th><th></th></tr></thead>
         <tbody id="onb-body"><tr><td colspan="9"><div class="loading"><div class="spin"></div><div>Chargement…</div></div></td></tr></tbody></table>
       </div>
     </div>
@@ -491,10 +562,10 @@ function renderOrds(){
   document.getElementById('ord-cnt').textContent=d.length;
   const b=document.getElementById('ord-body');
   if(!d.length){b.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-ico">◎</div>Aucune commande</div></td></tr>';return;}
-  b.innerHTML=d.map(o=>'<tr style="'+(o.status==='new'&&!o.seen?'background:rgba(196,113,74,.05)':'')+'" onclick="openOrdModal('+esc(o)+')"><td class="tn">'+(o.payer_name||'—')+'</td><td class="te">'+(o.payer_email||'—')+'</td><td>'+(o.package||'—')+'</td><td>'+(o.total_price!=null?'₪'+fmtN(o.total_price):'—')+'</td><td>'+badge(o.status)+'</td><td onclick="event.stopPropagation()">'+ckHtml('orders',o.id,'seen',o.seen,'Vu','seen')+'</td><td onclick="event.stopPropagation()">'+ckHtml('orders',o.id,'done',o.done,'Fait','done')+'</td><td>'+fmt(o.created_at)+'</td><td><button class="btn-s" style="padding:4px 10px;font-size:11.5px" onclick="event.stopPropagation();openOrdModal('+esc(o)+')">Voir</button></td></tr>').join('');
+  b.innerHTML=d.map(o=>'<tr style="'+(o.status==='new'&&!o.seen?'background:rgba(196,113,74,.05)':'')+'" onclick="openOrdModal('+esc(o)+')"><td style="font-size:11px;color:var(--muted);font-family:monospace">#'+(o.id.slice(0,6).toUpperCase())+'</td><td class="tn">'+(o.payer_name||'—')+'</td><td class="te">'+(o.payer_email||'—')+'</td><td>'+(o.package||'—')+'</td><td style="font-weight:600;color:var(--rust)">'+(o.total_price!=null?'₪'+fmtN(o.total_price):'—')+'</td><td>'+badge(o.status)+'</td><td onclick="event.stopPropagation()">'+ckHtml('orders',o.id,'seen',o.seen,'Vu','seen')+'</td><td onclick="event.stopPropagation()">'+ckHtml('orders',o.id,'done',o.done,'Fait','done')+'</td><td>'+fmt(o.created_at)+'</td><td><button class="btn-s" style="padding:4px 10px;font-size:11.5px" onclick="event.stopPropagation();openOrdModal('+esc(o)+')">Voir</button></td></tr>').join('');
 }
 function openOrdModal(o){
-  document.getElementById('m-title').textContent=(o.payer_name||'Commande')+' — '+(o.package||'');
+  document.getElementById('m-title').textContent='#'+o.id.slice(0,6).toUpperCase()+' · '+(o.payer_name||'Commande')+' — '+(o.package||'');
 
   // Format addons
   let addonsStr='—';
@@ -506,8 +577,10 @@ function openOrdModal(o){
   const psMap={paid:'<span class="badge b-done">Payé</span>',pending:'<span class="badge b-pending">En attente</span>',deposit_paid:'<span class="badge b-prog">Acompte reçu</span>',failed:'<span class="badge b-cancel">Échoué</span>'};
   const psBadge=psMap[o.payment_status]||('<span class="badge b-pending">'+(o.payment_status||'—')+'</span>');
 
+  const ordNum='#'+o.id.slice(0,6).toUpperCase();
   const sections = [
     {title:'👤 Client', rows:[
+      ['N° commande','<span style="font-family:monospace;font-weight:700;font-size:14px;color:var(--rust)">'+ordNum+'</span>'],
       ['Nom',o.payer_name],
       ['Email',o.payer_email],
       ['Adresse facturation',o.billing_address],
@@ -555,7 +628,7 @@ function openOrdModal(o){
   document.getElementById('m-foot').innerHTML=
     '<button class="btn-danger" onclick="confirmDelete(\'orders\',\''+o.id+'\',\''+escape(o.payer_name||'cette commande')+'\')">🗑 Supprimer</button>'+
     '<button class="btn-s" onclick="closeModal()">Fermer</button>'+
-    '<button class="btn-promote" onclick="promoteToOnboarding('+esc(o)+')">→ Onboarding</button>'+
+    '<button class="btn-invoice" onclick="generateInvoice('+esc(o)+');closeModal()">🧾 Facture</button>'+'<button class="btn-promote" onclick="promoteToOnboarding('+esc(o)+')">→ Onboarding</button>'+
     '<button class="btn-p" onclick="saveOrd(\''+o.id+'\')">💾 Sauvegarder</button>';
   document.getElementById('overlay').classList.add('open');
 }
@@ -575,14 +648,79 @@ function renderOnbs(){
   else if(fOnb!=='all')d=onbs.filter(o=>(o.status||'pending')===fOnb);
   document.getElementById('onb-cnt').textContent=d.length;
   const b=document.getElementById('onb-body');
-  if(!d.length){b.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-ico">◑</div>Aucun onboarding</div></td></tr>';return;}
-  b.innerHTML=d.map(o=>'<tr style="'+(o.seen?'':'background:rgba(90,140,107,.04)')+'" onclick="openOnbModal('+esc(o)+')"><td class="tn">'+(o.business_name||o.name||'—')+'</td><td class="te">'+(o.email||o.contact_email||'—')+'</td><td>'+(o.business_type||o.sector||'—')+'</td><td>'+(o.plan||o.package_name||'—')+'</td><td>'+badge(o.status||'pending')+'</td><td onclick="event.stopPropagation()">'+ckHtml('onboarding',o.id,'seen',o.seen,'Vu','seen')+'</td><td onclick="event.stopPropagation()">'+ckHtml('onboarding',o.id,'done',o.done,'Fait','done')+'</td><td>'+fmt(o.created_at)+'</td><td><button class="btn-s" style="padding:4px 10px;font-size:11.5px" onclick="event.stopPropagation();openOnbModal('+esc(o)+')">Voir</button></td></tr>').join('');
+  if(!d.length){b.innerHTML='<tr><td colspan="10"><div class="empty"><div class="empty-ico">◑</div>Aucun onboarding</div></td></tr>';return;}
+  b.innerHTML=d.map(o=>{
+    const linked=ords.find(r=>r.id===o.order_id);
+    const ordNum=linked?'#'+linked.id.slice(0,6).toUpperCase():(o.order_id?'#'+o.order_id.slice(0,6).toUpperCase():'—');
+    const montant=linked&&linked.total_price!=null?'₪'+fmtN(linked.total_price):'—';
+    return '<tr style="'+(o.seen?'':'background:rgba(90,140,107,.04)')+'" onclick="openOnbModal('+esc(o)+')">'
+      +'<td style="font-size:11px;color:var(--muted);font-family:monospace">'+ordNum+'</td>'
+      +'<td class="tn">'+(o.restaurant_name||o.business_name||'—')+'</td>'
+      +'<td class="te">'+(o.email||'—')+'</td>'
+      +'<td>'+(o.restaurant_type||'—')+'</td>'
+      +'<td style="font-weight:600;color:var(--rust)">'+montant+'</td>'
+      +'<td>'+badge(o.status||'pending')+'</td>'
+      +'<td onclick="event.stopPropagation()">'+ckHtml('onboarding',o.id,'seen',o.seen,'Vu','seen')+'</td>'
+      +'<td onclick="event.stopPropagation()">'+ckHtml('onboarding',o.id,'done',o.done,'Fait','done')+'</td>'
+      +'<td>'+fmt(o.created_at)+'</td>'
+      +'<td><button class="btn-s" style="padding:4px 10px;font-size:11.5px" onclick="event.stopPropagation();openOnbModal('+esc(o)+')">Voir</button></td>'
+      +'</tr>';
+  }).join('');
 }
 function openOnbModal(o){
-  document.getElementById('m-title').textContent=o.business_name||o.name||'Onboarding';
-  const skip=['id','created_at','updated_at','notes','internal_notes','status','seen','done'];
-  const entries=Object.entries(o).filter(([k,v])=>v&&!skip.includes(k));
-  let h=entries.map(([k,v])=>'<div class="drow"><div class="dlbl">'+k.replace(/_/g,' ')+'</div><div class="dval">'+v+'</div></div>').join('');
+  const linked=ords.find(r=>r.id===o.order_id);
+  const ordNum=linked?'#'+linked.id.slice(0,6).toUpperCase():(o.order_id?'#'+o.order_id.slice(0,6).toUpperCase():'');
+  document.getElementById('m-title').textContent=(o.restaurant_name||o.business_name||'Onboarding')+(ordNum?' · '+ordNum:'');
+  const sections=[
+    {title:'🏪 Établissement', rows:[
+      ['N° commande',ordNum?'<span style="font-family:monospace;font-weight:700;color:var(--rust)">'+ordNum+'</span>':null],
+      ['Nom restaurant',o.restaurant_name],
+      ['Type',o.restaurant_type],
+      ['Adresse',o.full_address],
+      ['Téléphone',o.phone],
+      ['Email',o.email],
+      ['Horaires',o.opening_hours],
+      ['Jours fermés',o.closed_days],
+    ]},
+    {title:'🌐 Web & Réseaux', rows:[
+      ['Google Maps',o.google_maps_link?'<a href="'+o.google_maps_link+'" target="_blank" style="color:var(--rust)">Voir Maps →</a>':null],
+      ['Instagram',o.instagram?'<a href="'+o.instagram+'" target="_blank" style="color:var(--rust)">'+o.instagram+'</a>':null],
+      ['Facebook',o.facebook?'<a href="'+o.facebook+'" target="_blank" style="color:var(--rust)">'+o.facebook+'</a>':null],
+      ['TikTok',o.tiktok],
+      ['Système réservation',o.reservation_system],
+      ['Langues site',o.website_languages],
+    ]},
+    {title:'🎨 Design & Contenu', rows:[
+      ['Couleurs',o.main_colors],
+      ['Ambiance',o.ambiance],
+      ['Ton communication',o.communication_tone],
+      ['Description courte',o.short_description],
+      ['Options diététiques',o.dietary_options],
+      ['URLs inspiration',o.inspiration_urls],
+    ]},
+    {title:'📋 Administratif', rows:[
+      ['Raison sociale',o.legal_business_name],
+      ['N° entreprise',o.business_number],
+      ['Conditions spéciales',o.special_conditions],
+      ['Contact approbateur',o.approver_contact],
+      ['Deadline feedback',o.feedback_deadline],
+    ]},
+    {title:'💰 Commande liée', rows:[
+      ['Forfait',linked?linked.package:null],
+      ['Montant total',linked&&linked.total_price!=null?'<strong style="color:var(--rust)">₪'+fmtN(linked.total_price)+'</strong>':null],
+      ['Statut paiement',linked?linked.payment_status:null],
+      ['Payé le',linked&&linked.paid_at?fmt(linked.paid_at):null],
+      ['WeTransfer',linked&&linked.wetransfer_url?'<a href="'+linked.wetransfer_url+'" target="_blank" style="color:var(--rust)">↗ Ouvrir docs</a>':null],
+    ]},
+  ];
+  let h='';
+  sections.forEach(sec=>{
+    const rows=sec.rows.filter(([,v])=>v!=null&&v!==''&&v!=='—'&&v!==false);
+    if(!rows.length)return;
+    h+='<div style="margin-bottom:18px"><div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--sand)">'+sec.title+'</div>';
+    h+=rows.map(([l,v])=>'<div class="drow"><div class="dlbl">'+l+'</div><div class="dval">'+v+'</div></div>').join('');
+    h+='</div>';
+  });
   h+='<div class="drow"><div class="dlbl">Statut</div><div class="dval"><select class="sel-m" id="m-status"><option value="pending" '+(!o.status||o.status==='pending'?'selected':'')+'>En attente</option><option value="in_progress" '+(o.status==='in_progress'?'selected':'')+'>En cours</option><option value="completed" '+(o.status==='completed'?'selected':'')+'>Terminé</option></select></div></div>';
   h+='<div class="drow"><div class="dlbl">Traitement</div><div class="dval" style="display:flex;gap:16px">'+ckHtml('onboarding',o.id,'seen',o.seen,'Vu','seen')+ckHtml('onboarding',o.id,'done',o.done,'Fait','done')+'</div></div>';
   h+='<div class="drow"><div class="dlbl">Note interne</div><div class="dval"><textarea class="ta" id="m-note">'+(o.internal_notes||o.notes||'')+'</textarea></div></div>';
@@ -632,7 +770,7 @@ function renderStats(){
   const pM=filterByPeriod(msgs,from),pA=filterByPeriod(auds,from),pO=filterByPeriod(ords,from),pN=filterByPeriod(onbs,from);
   const titles={day:'Bilan du jour',week:'Bilan de la semaine',month:'Bilan du mois',year:'Bilan annuel'};
   document.getElementById('eod-title').textContent=titles[statPeriod];
-  const rev=pO.filter(o=>o.status==='completed').reduce((s,o)=>s+(Number(o.amount)||0),0);
+  const rev=pO.filter(o=>o.status==='completed').reduce((s,o)=>s+(Number(o.total_price)||0),0);
   document.getElementById('eod-grid').innerHTML=[['Messages reçus',pM.length],['Audits reçus',pA.length],['Commandes',pO.length],['Revenus',rev?'₪'+fmtN(rev):'₪0']].map(([l,v])=>'<div><div class="el">'+l+'</div><div class="ev">'+v+'</div></div>').join('');
   const completed=pO.filter(o=>o.status==='completed').length;
   const conv=pO.length?Math.round(completed/pO.length*100):0;
@@ -664,13 +802,13 @@ function renderStats(){
 async function promoteToOnboarding(o) {
   // 1. Create onboarding row with order data
   const onbData = {
-    business_name: o.payer_name,
+    order_id: o.id,
+    restaurant_name: o.payer_name,
     email: o.payer_email,
-    plan: o.package,
     status: 'in_progress',
     seen: false,
     done: false,
-    internal_notes: 'Créé automatiquement depuis la commande #'+o.id.slice(0,8)+' le '+new Date().toLocaleDateString('fr-FR'),
+    internal_notes: 'Créé depuis commande #'+o.id.slice(0,6).toUpperCase()+' le '+new Date().toLocaleDateString('fr-FR'),
   };
   const { error: e1 } = await db.from('onboarding').insert(onbData);
   if (e1) { toast('Erreur création onboarding: '+e1.message,'✕'); return; }
@@ -682,6 +820,80 @@ async function promoteToOnboarding(o) {
   toast('✓ Commande passée en Onboarding !', '🚀');
   closeModal();
   await loadAll(true);
+}
+
+
+// ── EXPORT CSV ───────────────────────────────────────────
+function exportData(type) {
+  const now = new Date().toLocaleDateString('fr-FR').replace(/\//g,'-');
+  if (type === 'orders' || type === 'both') {
+    const rows = [['N°','Nom client','Email','Forfait','Montant','Statut paiement','Statut','Payé le','Addons','Total addons','Méthode paiement','WeTransfer','Date commande']];
+    ords.forEach(o => {
+      let addons='';
+      try{addons=Array.isArray(o.addons)?o.addons.join(' | '):o.addons||'';}catch(e){}
+      rows.push([
+        '#'+o.id.slice(0,6).toUpperCase(),
+        o.payer_name||'',
+        o.payer_email||'',
+        o.package||'',
+        o.total_price!=null?o.total_price:'',
+        o.payment_status||'',
+        o.status||'',
+        o.paid_at?new Date(o.paid_at).toLocaleDateString('fr-FR'):'',
+        addons,
+        o.addons_total||'',
+        o.payment_method||'',
+        o.wetransfer_url||'',
+        o.created_at?new Date(o.created_at).toLocaleDateString('fr-FR'):'',
+      ]);
+    });
+    downloadCSV(rows, 'mizra-commandes-'+now+'.csv');
+  }
+  if (type === 'onboarding' || type === 'both') {
+    const rows = [['N° commande','Restaurant','Email','Type','Téléphone','Adresse','Horaires','Instagram','Facebook','TikTok','Réservation','Langues','Couleurs','Ambiance','Ton','Description','Diététique','Inspirations','Raison sociale','N° entreprise','Contact approbateur','Deadline','Statut','Date']];
+    onbs.forEach(o => {
+      const linked=ords.find(r=>r.id===o.order_id);
+      const ordNum=linked?'#'+linked.id.slice(0,6).toUpperCase():'';
+      rows.push([
+        ordNum,
+        o.restaurant_name||o.business_name||'',
+        o.email||'',
+        o.restaurant_type||'',
+        o.phone||'',
+        o.full_address||'',
+        o.opening_hours||'',
+        o.instagram||'',
+        o.facebook||'',
+        o.tiktok||'',
+        o.reservation_system||'',
+        o.website_languages||'',
+        o.main_colors||'',
+        o.ambiance||'',
+        o.communication_tone||'',
+        o.short_description||'',
+        o.dietary_options||'',
+        o.inspiration_urls||'',
+        o.legal_business_name||'',
+        o.business_number||'',
+        o.approver_contact||'',
+        o.feedback_deadline||'',
+        o.status||'',
+        o.created_at?new Date(o.created_at).toLocaleDateString('fr-FR'):'',
+      ]);
+    });
+    downloadCSV(rows, 'mizra-onboarding-'+now+'.csv');
+  }
+}
+
+function downloadCSV(rows, filename) {
+  const csv = rows.map(r => r.map(v => '"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  toast('Export téléchargé ✓','⬇');
 }
 
 function closeModal(){document.getElementById('overlay').classList.remove('open');}
@@ -734,6 +946,154 @@ document.getElementById('confirm-overlay').addEventListener('click', function(e)
 
 // loadAll() is now called after auth check
 
+
+// ── INVOICE ──────────────────────────────────────────────
+// Auto-increment counter stored in sessionStorage
+function getNextInvNum() {
+  const year = new Date().getFullYear();
+  const key = 'mizra_inv_'+year;
+  let n = parseInt(sessionStorage.getItem(key)||'0') + 1;
+  sessionStorage.setItem(key, n);
+  return 'INV-'+year+'-'+String(n).padStart(3,'0');
+}
+
+function generateInvoice(o) {
+  const invNum = getNextInvNum();
+  const today = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate()+7);
+  const dueDateStr = dueDate.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+
+  // Payment status
+  const psLabels = {paid:'Payée',deposit_paid:'Acompte reçu',pending:'En attente',failed:'Non payée'};
+  const psClasses = {paid:'inv-paid',deposit_paid:'inv-deposit',pending:'inv-pending',failed:'inv-pending'};
+  const psLabel = psLabels[o.payment_status]||o.payment_status||'En attente';
+  const psCls = psClasses[o.payment_status]||'inv-pending';
+
+  // Build line items
+  let rows = '';
+  const packagePrice = o.package_price||o.total_price||0;
+  rows += `<tr>
+    <td><div class="inv-item-name">${o.package||'Forfait Mizra'}</div><div class="inv-item-desc">Création de site web & mise en ligne digitale</div></td>
+    <td>1</td>
+    <td style="text-align:right">₪${fmtN(packagePrice)}</td>
+    <td>₪${fmtN(packagePrice)}</td>
+  </tr>`;
+
+  // Addons
+  let addonsTotal = 0;
+  if (o.addons && o.addons.length) {
+    const addonsList = Array.isArray(o.addons) ? o.addons : [o.addons];
+    addonsList.forEach(a => {
+      rows += `<tr><td><div class="inv-item-name">${a}</div><div class="inv-item-desc">Option complémentaire</div></td><td>1</td><td style="text-align:right">—</td><td>—</td></tr>`;
+    });
+    addonsTotal = o.addons_total||0;
+  }
+
+  const subtotal = o.total_price || (packagePrice + addonsTotal);
+  const vatRate = 18; // Israeli VAT 18%
+  const vatAmt = Math.round(subtotal * vatRate / 118); // total is TTC → extract VAT
+  const ht = subtotal - vatAmt;
+  const deposit = o.deposit_amount||0;
+  const remaining = subtotal - deposit;
+
+  // Payment method label
+  const pmLabels = {bank_transfer:'Virement bancaire',credit_card:'Carte bancaire',bit:'Bit',paypal:'PayPal',cash:'Espèces'};
+  const pmLabel = pmLabels[o.payment_method]||o.payment_method||'';
+
+  document.getElementById('invoice-doc').innerHTML = `
+    <div class="inv-header">
+      <div class="inv-brand">
+        <div class="inv-name">Mizra</div>
+        <div class="inv-tagline">Digital Setup for Small Businesses</div>
+        <div class="inv-addr">
+          Adda Margaux<br>
+          Carmelit 11, Tel Aviv<br>
+          hello@getmizra.com<br>
+          getmizra.com
+        </div>
+      </div>
+      <div class="inv-meta">
+        <div class="inv-number">${invNum}</div>
+        <div class="inv-meta-row">Date : <span>${today}</span></div>
+        <div class="inv-meta-row">Échéance : <span>${dueDateStr}</span></div>
+        <div class="inv-meta-row">N° commande : <span style="font-family:monospace">#${o.id.slice(0,6).toUpperCase()}</span></div>
+        <div style="margin-top:10px"><span class="inv-status-badge ${psCls}">${psLabel}</span></div>
+      </div>
+    </div>
+
+    <div class="inv-parties">
+      <div>
+        <div class="inv-party-lbl">Émetteur</div>
+        <div class="inv-party-name">Adda Margaux</div>
+        <div class="inv-party-detail">
+          עוסק מורשה n° 348277518<br>
+          Carmelit 11, Tel Aviv-Yafo<br>
+          hello@getmizra.com
+        </div>
+      </div>
+      <div>
+        <div class="inv-party-lbl">Facturé à</div>
+        <div class="inv-party-name">${o.payer_name||'—'}</div>
+        <div class="inv-party-detail">
+          ${o.payer_email||''}<br>
+          ${o.billing_address||''}
+        </div>
+      </div>
+    </div>
+
+    <table class="inv-table">
+      <thead><tr><th>Description</th><th>Qté</th><th>Prix unit.</th><th style="text-align:right">Total</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+
+    <div class="inv-totals">
+      <div class="inv-totals-box">
+        <div class="inv-total-row"><span>Sous-total HT</span><span class="inv-total-val">₪${fmtN(ht)}</span></div>
+        <div class="inv-total-row"><span>TVA (18%)</span><span class="inv-total-val">₪${fmtN(vatAmt)}</span></div>
+        ${deposit>0?`<div class="inv-total-row"><span>Acompte reçu</span><span class="inv-total-val" style="color:#5A8C6B">−₪${fmtN(deposit)}</span></div>`:''}
+        <div class="inv-total-row grand">
+          <span>${deposit>0?'Solde restant':'Total TTC'}</span>
+          <span class="inv-total-val">₪${fmtN(deposit>0?remaining:subtotal)}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="inv-payment">
+      <div class="inv-payment-title">💳 Coordonnées bancaires${pmLabel?' · '+pmLabel:''}</div>
+      <div class="inv-bank-grid">
+        <div class="inv-bank-row"><strong>Banque</strong>Bank Leumi (010)</div>
+        <div class="inv-bank-row"><strong>Succursale</strong>806</div>
+        <div class="inv-bank-row"><strong>N° compte</strong>20659/73</div>
+        <div class="inv-bank-row"><strong>SWIFT</strong>LUMIILITXXX</div>
+        <div class="inv-bank-row" style="grid-column:1/-1"><strong>IBAN / מספר זה"ב</strong>IL200108060000002065973</div>
+      </div>
+    </div>
+
+    <div class="inv-footer">
+      <div class="inv-conditions">
+        Paiement à 7 jours à compter de la date de facturation.<br>
+        Tout retard de paiement entraîne des pénalités de 1,5% par mois.<br>
+        Merci pour votre confiance.
+      </div>
+      <div class="inv-vat">
+        <span class="inv-vat-num">עוסק מורשה</span>
+        348277518
+      </div>
+    </div>
+  `;
+
+  document.getElementById('invoice-overlay').classList.add('open');
+}
+
+function printInvoice() {
+  window.print();
+}
+
+function closeInvoice() {
+  document.getElementById('invoice-overlay').classList.remove('open');
+}
+
 // ── AUTH ─────────────────────────────────────────────────
 const PWD_HASH = '325153c5e0efd815d4f8d5238dfcf06888e327c2251f0d5168b74c227ff60662'; // Mizra2026!
 
@@ -768,5 +1128,20 @@ if (sessionStorage.getItem('mizra_auth') === '1') {
 
 
 </script>
+
+<!-- INVOICE OVERLAY -->
+<div id="invoice-overlay">
+  <div class="inv-wrapper">
+    <div class="inv-toolbar">
+      <div class="inv-toolbar-title">Aperçu facture</div>
+      <div class="inv-toolbar-btns">
+        <button class="inv-btn-print" onclick="printInvoice()">⬇ Télécharger PDF</button>
+        <button class="inv-btn-close" onclick="closeInvoice()">✕ Fermer</button>
+      </div>
+    </div>
+    <div id="invoice-doc"><!-- filled by JS --></div>
+  </div>
+</div>
+
 </body>
 </html>

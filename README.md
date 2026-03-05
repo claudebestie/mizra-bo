@@ -32,6 +32,7 @@ ALTER TABLE contact_leads ADD COLUMN IF NOT EXISTS seen boolean DEFAULT false, A
 ALTER TABLE audit_requests ADD COLUMN IF NOT EXISTS seen boolean DEFAULT false, ADD COLUMN IF NOT EXISTS done boolean DEFAULT false, ADD COLUMN IF NOT EXISTS internal_notes text;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS seen boolean DEFAULT false, ADD COLUMN IF NOT EXISTS done boolean DEFAULT false;
 ALTER TABLE onboarding ADD COLUMN IF NOT EXISTS seen boolean DEFAULT false, ADD COLUMN IF NOT EXISTS done boolean DEFAULT false, ADD COLUMN IF NOT EXISTS internal_notes text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS wetransfer_url text;
 ```
 
 ## Accès

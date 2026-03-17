@@ -468,6 +468,24 @@ tr.unread td:first-child::before{content:'';position:absolute;left:4px;top:50%;t
       </div>
     </div>
 
+    <!-- Zone import PDF -->
+    <div id="fi-pdf-zone" style="max-width:900px;margin-bottom:20px;border:2px dashed var(--border2);border-radius:var(--r2);padding:20px 24px;background:var(--white);display:flex;align-items:center;gap:16px;cursor:pointer;transition:border-color .2s" onclick="document.getElementById('fi-pdf-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border2)';handlePdfDrop(event)">
+      <div style="font-size:28px">📄</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">Importer un devis PDF</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Clique ou glisse un PDF — Claude extrait automatiquement toutes les infos</div>
+      </div>
+      <div id="fi-pdf-status" style="font-size:12px;color:var(--hint)">Aucun fichier</div>
+      <input type="file" id="fi-pdf-input" accept=".pdf" style="display:none" onchange="handlePdfFile(this.files[0])"/>
+    </div>
+
+    <!-- Loader analyse -->
+    <div id="fi-pdf-loader" style="display:none;max-width:900px;margin-bottom:16px;padding:14px 20px;background:var(--accent-l);border:1px solid #E8C4A8;border-radius:var(--r);font-size:13px;color:var(--accent);display:none;align-items:center;gap:10px">
+      <span style="display:inline-block;animation:spin 1s linear infinite">⟳</span>
+      Analyse du PDF en cours…
+    </div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px">
 
       <!-- Bloc client -->
@@ -1360,7 +1378,124 @@ function openInvoice(type, id){
   generateInvoice(item, source);
 }
 
-// ── FACTURATION MANUELLE ──────────────────────────────────────────────────────
+// ── PDF IMPORT ────────────────────────────────────────────────────────────────
+
+function handlePdfDrop(e){
+  const f = e.dataTransfer.files[0];
+  if(f && f.type==='application/pdf') handlePdfFile(f);
+}
+
+async function handlePdfFile(file){
+  if(!file) return;
+  const statusEl = document.getElementById('fi-pdf-status');
+  const loader = document.getElementById('fi-pdf-loader');
+  statusEl.textContent = file.name;
+  loader.style.display = 'flex';
+  fiLog('');
+
+  try {
+    const base64 = await fileToBase64(file);
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'document',
+              source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+            },
+            {
+              type: 'text',
+              text: `Analyse ce devis/contrat et retourne UNIQUEMENT un JSON valide (sans markdown, sans backticks) avec ces champs :
+{
+  "name": "nom du contact principal (prénom + nom)",
+  "email": "email du client",
+  "phone": "téléphone si présent sinon vide",
+  "company": "nom de l'entreprise cliente",
+  "package": "description courte de la prestation principale (max 80 caractères)",
+  "total": nombre (montant total en chiffres, sans symbole monétaire, partie one-time seulement si mixte),
+  "source": "il" si montant en NIS/₪ ou "fr" si en EUR/€,
+  "paymethod": "mode de paiement principal",
+  "paystatus": "En attente",
+  "notes": "résumé des conditions clés : acompte, solde, récurrent si applicable (max 200 caractères)",
+  "instalments": [
+    {"label": "Acompte", "amount": nombre, "date": "YYYY-MM-DD", "status": "En attente"},
+    {"label": "Solde", "amount": nombre, "date": "YYYY-MM-DD", "status": "En attente"}
+  ]
+}
+Si pas de paiement en plusieurs fois détectable, mets instalments à null. Pour les dates, déduis-les depuis la date du document. Retourne uniquement le JSON.`
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.find(b => b.type === 'text')?.text || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    // Remplir les champs
+    if(parsed.name)       document.getElementById('fi-name').value = parsed.name;
+    if(parsed.email)      document.getElementById('fi-email').value = parsed.email;
+    if(parsed.phone)      document.getElementById('fi-phone').value = parsed.phone;
+    if(parsed.company)    document.getElementById('fi-company').value = parsed.company;
+    if(parsed.package)    document.getElementById('fi-package').value = parsed.package;
+    if(parsed.total)      document.getElementById('fi-total').value = parsed.total;
+    if(parsed.paymethod){
+      const sel = document.getElementById('fi-paymethod');
+      const opts = [...sel.options].map(o=>o.value);
+      sel.value = opts.includes(parsed.paymethod) ? parsed.paymethod : 'Virement bancaire';
+    }
+    if(parsed.source){
+      document.getElementById('fi-source').value = parsed.source;
+    }
+
+    // Versements
+    if(parsed.instalments && parsed.instalments.length > 1){
+      document.getElementById('fi-installments-toggle').checked = true;
+      const nb = parsed.instalments.length;
+      const nbSel = document.getElementById('fi-nb-inst');
+      nbSel.style.display = 'inline-block';
+      nbSel.value = nb <= 3 ? nb : 3;
+      document.getElementById('fi-inst-rows').style.display = 'flex';
+      // Build rows first
+      buildInstalmentRows();
+      // Then override with parsed values
+      parsed.instalments.forEach((inst, i) => {
+        const amtEl = document.getElementById(`inst-amt-${i}`);
+        const dateEl = document.getElementById(`inst-date-${i}`);
+        if(amtEl) amtEl.value = inst.amount;
+        if(dateEl && inst.date) dateEl.value = inst.date;
+      });
+    }
+
+    if(parsed.notes)      document.getElementById('fi-notes').value = parsed.notes;
+
+    loader.style.display = 'none';
+    fiLog(`✓ PDF analysé : ${parsed.company || parsed.name} — infos pré-remplies. Vérifie et ajuste si besoin.`);
+
+  } catch(err) {
+    loader.style.display = 'none';
+    fiLog('Erreur lors de l\'analyse du PDF : ' + err.message, false);
+  }
+}
+
+function fileToBase64(file){
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => res(reader.result.split(',')[1]);
+    reader.onerror = () => rej(new Error('Lecture fichier échouée'));
+    reader.readAsDataURL(file);
+  });
+}
+
+
 
 function toggleInstallments(){
   const on = document.getElementById('fi-installments-toggle').checked;

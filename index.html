@@ -262,7 +262,7 @@ tr.unread td:first-child::before{content:'';position:absolute;left:4px;top:50%;t
     </div>
     <div class="table-wrap">
       <table><thead><tr>
-        <th>#</th><th>Client</th><th>Email</th><th>Formule</th><th>Total</th><th>Paiement</th><th>Statut</th><th>Date</th>
+        <th>#</th><th>Client</th><th>Email</th><th>Formule</th><th>Total</th><th>Paiement</th><th>Affiliate</th><th>Statut</th><th>Date</th>
       </tr></thead>
       <tbody id="body-orders"></tbody></table>
     </div>
@@ -613,7 +613,7 @@ function renderOrders(){
   const d = getFiltered('orders');
   document.getElementById('ord-cnt').textContent = d.length;
   const b = document.getElementById('body-orders');
-  if(!d.length){b.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-ico">📦</div>Aucune commande</div></td></tr>';return;}
+  if(!d.length){b.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-ico">📦</div>Aucune commande</div></td></tr>';return;}
   b.innerHTML = d.map(o=>`<tr class="${!o.seen?'unread':''}" onclick="openModal('orders','${o.id}')">
     <td style="font-size:11px;color:var(--hint);font-family:monospace">${ordNum(o.id)}</td>
     <td class="tn">${o.payer_name||'—'}</td>
@@ -621,6 +621,7 @@ function renderOrders(){
     <td style="font-size:13px">${o.package||'—'}</td>
     <td style="font-weight:500">${euros(o.total_price,'ils')}</td>
     <td style="font-size:12px;color:var(--muted)">${o.payment_status||'—'}</td>
+    <td>${o.referral_code?`<span class="badge" style="background:var(--amber-l);color:var(--amber)">🤝 ${o.referral_code}</span>`:'<span style="color:var(--hint);font-size:12px">—</span>'}</td>
     <td>${badge(o.status)}</td>
     <td style="color:var(--hint);font-size:12px">${fmt(o.created_at)}</td>
   </tr>`).join('');
@@ -950,6 +951,10 @@ function renderOrdModal(o, title, body, footer){
       <div class="field-row-m">${field('Add-ons',Array.isArray(o.addons)?o.addons.join(', '):o.addons)}${field('Total add-ons',euros(o.addons_total))}</div>
       <div class="field-row-m">${field('TOTAL',euros(o.total_price,'ils'))}${field('Statut paiement',o.payment_status)}</div>
     </div>
+    ${o.referral_code?`<div class="modal-section">
+      <div class="modal-section-title" style="color:var(--amber)">🤝 Affiliation</div>
+      <div class="field-row-m">${field('Référent',o.referral_code)}${field('Commission (20%)',euros(o.referral_commission,'ils'))}</div>
+    </div>`:''}
     <div class="modal-section">
       <div class="modal-section-title">Statut</div>
       <div class="field-m"><label>Statut</label>

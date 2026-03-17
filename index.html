@@ -189,6 +189,11 @@ tr.unread td:first-child::before{content:'';position:absolute;left:4px;top:50%;t
     <span class="nav-badge fr" id="badge-lancio-onboarding">0</span>
   </div>
 
+  <div class="nav-section">Outils</div>
+  <div class="nav-item" onclick="nav('facturation')" id="nav-facturation">
+    <span>🧾</span> Facturation
+  </div>
+
   <div class="nav-section">Vue globale</div>
   <div class="nav-item" onclick="nav('dashboard')" id="nav-dashboard">
     <span>◈</span> Dashboard
@@ -453,8 +458,115 @@ tr.unread td:first-child::before{content:'';position:absolute;left:4px;top:50%;t
     </div>
   </div>
 
-</div><!-- /main -->
-</div><!-- /app -->
+  <!-- ── FACTURATION MANUELLE ── -->
+  <div class="page" id="page-facturation">
+    <div class="page-header">
+      <div class="page-title">🧾 Facturation manuelle</div>
+      <div class="page-actions">
+        <button class="btn btn-primary" onclick="previewManualInvoice()">👁 Aperçu facture</button>
+        <button class="btn btn-green" onclick="createAndInject()">✦ Créer + Injecter</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px">
+
+      <!-- Bloc client -->
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);padding-bottom:10px;border-bottom:1px solid var(--border)">Client</div>
+
+        <div class="field-m">
+          <label>Nom complet *</label>
+          <input type="text" id="fi-name" placeholder="David Cohen"/>
+        </div>
+        <div class="field-m">
+          <label>Email *</label>
+          <input type="email" id="fi-email" placeholder="david@example.com"/>
+        </div>
+        <div class="field-m">
+          <label>Téléphone</label>
+          <input type="text" id="fi-phone" placeholder="+972 54 ..."/>
+        </div>
+        <div class="field-m">
+          <label>Entité / Entreprise</label>
+          <input type="text" id="fi-company" placeholder="Nom du business"/>
+        </div>
+      </div>
+
+      <!-- Bloc commande -->
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);padding-bottom:10px;border-bottom:1px solid var(--border)">Commande</div>
+
+        <div class="field-m">
+          <label>Source</label>
+          <select id="fi-source">
+            <option value="il">🇮🇱 Mizra (₪)</option>
+            <option value="fr">🇫🇷 Lancio (€)</option>
+          </select>
+        </div>
+        <div class="field-m">
+          <label>Description / Formule *</label>
+          <input type="text" id="fi-package" placeholder="Site web professionnel — Restaurant"/>
+        </div>
+        <div class="field-m">
+          <label>Notes internes (onboarding)</label>
+          <textarea id="fi-notes" placeholder="Informations de livraison, accès, remarques…"></textarea>
+        </div>
+      </div>
+
+      <!-- Bloc montant -->
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:20px;display:flex;flex-direction:column;gap:14px;grid-column:1/-1">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);padding-bottom:10px;border-bottom:1px solid var(--border)">Montant &amp; Paiement</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+          <div class="field-m">
+            <label>Montant total *</label>
+            <input type="number" id="fi-total" placeholder="1990" oninput="updateInstalmentsFromTotal()"/>
+          </div>
+          <div class="field-m">
+            <label>Mode de paiement</label>
+            <select id="fi-paymethod">
+              <option value="Virement bancaire">Virement bancaire</option>
+              <option value="PayPlus">PayPlus</option>
+              <option value="Carte bancaire">Carte bancaire</option>
+              <option value="Espèces">Espèces</option>
+              <option value="Stripe">Stripe</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="field-m">
+            <label>Statut paiement</label>
+            <select id="fi-paystatus">
+              <option value="En attente">En attente</option>
+              <option value="Acompte versé">Acompte versé</option>
+              <option value="Payé">Payé</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Plusieurs fois -->
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 0 4px">
+          <label style="font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="fi-installments-toggle" onchange="toggleInstallments()" style="width:16px;height:16px;accent-color:var(--accent)"/>
+            Paiement en plusieurs fois
+          </label>
+          <select id="fi-nb-inst" style="display:none;padding:5px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px" onchange="buildInstalmentRows()">
+            <option value="2">2 versements</option>
+            <option value="3">3 versements</option>
+          </select>
+        </div>
+
+        <div id="fi-inst-rows" style="display:none;flex-direction:column;gap:10px"></div>
+
+      </div>
+
+    </div>
+
+    <!-- Log -->
+    <div id="fi-log" style="margin-top:16px;max-width:900px;padding:12px 16px;border-radius:var(--r);font-size:13px;display:none"></div>
+
+  </div>
+
+
 
 <!-- ── MODAL ── -->
 <div class="overlay" id="overlay" onclick="closeModal(event)">
@@ -1246,6 +1358,235 @@ function openInvoice(type, id){
   closeModal();
   const source = type==='lancio' ? 'fr' : 'il';
   generateInvoice(item, source);
+}
+
+// ── FACTURATION MANUELLE ──────────────────────────────────────────────────────
+
+function toggleInstallments(){
+  const on = document.getElementById('fi-installments-toggle').checked;
+  document.getElementById('fi-nb-inst').style.display = on ? 'inline-block' : 'none';
+  document.getElementById('fi-inst-rows').style.display = on ? 'flex' : 'none';
+  if(on) buildInstalmentRows();
+}
+
+function buildInstalmentRows(){
+  const n = parseInt(document.getElementById('fi-nb-inst').value)||2;
+  const total = parseFloat(document.getElementById('fi-total').value)||0;
+  const source = document.getElementById('fi-source').value;
+  const sym = source==='fr' ? '€' : '₪';
+  const perPart = total ? Math.round((total/n)*100)/100 : '';
+  const today = new Date();
+  const rows = document.getElementById('fi-inst-rows');
+  rows.innerHTML = '';
+  for(let i=0;i<n;i++){
+    const d = new Date(today); d.setMonth(d.getMonth()+i);
+    const dateStr = d.toISOString().split('T')[0];
+    const label = i===0 ? 'Acompte' : (i===n-1 ? 'Solde' : `Versement ${i+1}`);
+    rows.innerHTML += `
+      <div style="display:grid;grid-template-columns:120px 1fr 160px;gap:10px;align-items:center;background:var(--bg);padding:10px 14px;border-radius:var(--r)">
+        <div style="font-size:12px;font-weight:600;color:var(--muted)">${label}</div>
+        <div class="field-m" style="margin:0">
+          <input type="number" id="inst-amt-${i}" value="${perPart}" placeholder="${sym}..." style="width:100%"/>
+        </div>
+        <div class="field-m" style="margin:0">
+          <input type="date" id="inst-date-${i}" value="${dateStr}" style="width:100%"/>
+        </div>
+      </div>`;
+  }
+}
+
+function updateInstalmentsFromTotal(){
+  const on = document.getElementById('fi-installments-toggle').checked;
+  if(on) buildInstalmentRows();
+}
+
+function getInstalmentsData(){
+  const on = document.getElementById('fi-installments-toggle').checked;
+  if(!on) return null;
+  const n = parseInt(document.getElementById('fi-nb-inst').value)||2;
+  const parts = [];
+  for(let i=0;i<n;i++){
+    parts.push({
+      label: i===0?'Acompte':(i===n-1?'Solde':`Versement ${i+1}`),
+      amount: parseFloat(document.getElementById(`inst-amt-${i}`).value)||0,
+      date: document.getElementById(`inst-date-${i}`).value,
+      status:'En attente'
+    });
+  }
+  return parts;
+}
+
+function getManualOrderObj(){
+  const source = document.getElementById('fi-source').value;
+  const isIL = source === 'il';
+  const name = document.getElementById('fi-name').value.trim();
+  const email = document.getElementById('fi-email').value.trim();
+  const pkg = document.getElementById('fi-package').value.trim();
+  const total = parseFloat(document.getElementById('fi-total').value)||0;
+  const paymethod = document.getElementById('fi-paymethod').value;
+  const paystatus = document.getElementById('fi-paystatus').value;
+  const notes = document.getElementById('fi-notes').value.trim();
+  const company = document.getElementById('fi-company').value.trim();
+  const phone = document.getElementById('fi-phone').value.trim();
+  const instalments = getInstalmentsData();
+  return { isIL, name, email, pkg, total, paymethod, paystatus, notes, company, phone, instalments, source };
+}
+
+function fiLog(msg, ok=true){
+  const el = document.getElementById('fi-log');
+  el.style.display='block';
+  el.style.background = ok ? 'var(--green-l)' : 'var(--red-l)';
+  el.style.color = ok ? 'var(--green)' : 'var(--red)';
+  el.style.border = `1px solid ${ok?'#B8DFC8':'#F0CACA'}`;
+  el.textContent = msg;
+}
+
+async function createAndInject(){
+  const f = getManualOrderObj();
+  if(!f.name||!f.email||!f.pkg||!f.total){ fiLog('Remplis les champs obligatoires : nom, email, formule, montant.',false); return; }
+
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+
+  const orderPayload = {
+    id,
+    payer_name: f.name,
+    payer_email: f.email,
+    package: f.pkg,
+    total_price: f.total,
+    payment_method: f.paymethod,
+    payment_status: f.paystatus,
+    status: 'new',
+    seen: false,
+    created_at: now,
+    ...(f.company && { business_name: f.company }),
+    ...(f.phone && { phone: f.phone }),
+    ...(f.instalments && { instalments: f.instalments }),
+    manual: true,
+  };
+
+  const onbPayload = {
+    id: crypto.randomUUID(),
+    order_id: id,
+    client_name: f.name,
+    business_name: f.company || f.name,
+    email: f.email,
+    status: 'new',
+    done: false,
+    seen: false,
+    internal_notes: f.notes || '',
+    created_at: now,
+  };
+
+  const ordTable = f.isIL ? 'orders' : 'lancio_orders';
+  const onbTable = f.isIL ? 'onboarding' : 'lancio_onboarding';
+
+  try {
+    const r1 = await fetch(`${SB}/rest/v1/${ordTable}`,{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(orderPayload)});
+    const r2 = await fetch(`${SB}/rest/v1/${onbTable}`,{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(onbPayload)});
+    if(!r1.ok||!r2.ok) throw new Error('Erreur Supabase');
+    fiLog(`✓ Commande + Onboarding créés pour ${f.name} — ${f.isIL?'₪':'€'}${f.total.toLocaleString('fr-FR')}`);
+    await loadAll();
+  } catch(e){
+    fiLog('Erreur lors de l\'injection : '+e.message, false);
+  }
+}
+
+function previewManualInvoice(){
+  const f = getManualOrderObj();
+  if(!f.name||!f.email||!f.pkg||!f.total){ fiLog('Remplis les champs obligatoires avant l\'aperçu.',false); return; }
+
+  const currency = f.isIL ? '₪' : '€';
+  const invNum = 'INV-' + new Date().getFullYear() + '-' + Math.random().toString(36).slice(2,8).toUpperCase();
+  const today = new Date().toLocaleDateString('fr-FR');
+  const due = new Date(Date.now()+7*864e5).toLocaleDateString('fr-FR');
+
+  const sellerBlock = f.isIL ? `
+    <div style="font-size:13px;line-height:1.7;color:#444">
+      <div style="font-size:16px;font-weight:700;color:#1a1a17;margin-bottom:4px">Mizra</div>
+      <div>Margaux Adda</div><div>Carmelit 11, Tel Aviv</div>
+      <div>עוסק מורשה : 348277518</div>
+      <div>hello@getmizra.com · getmizra.com</div>
+    </div>` : `
+    <div style="font-size:13px;line-height:1.7;color:#444">
+      <div style="font-size:16px;font-weight:700;color:#1a1a17;margin-bottom:4px">Lancio</div>
+      <div>Margaux Adda</div><div>68 rue de Vouillé, 75015 Paris, France</div>
+      <div>hello@lancio.fr · lancio.fr</div>
+    </div>`;
+
+  const instBlock = f.instalments ? `
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid #E5E2DA">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#9A9890;margin-bottom:10px">Échéancier de paiement</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:1px solid #E5E2DA">
+          <th style="text-align:left;padding:6px 0;color:#9A9890;font-size:11px">Versement</th>
+          <th style="text-align:left;padding:6px 0;color:#9A9890;font-size:11px">Date</th>
+          <th style="text-align:right;padding:6px 0;color:#9A9890;font-size:11px">Montant</th>
+          <th style="text-align:right;padding:6px 0;color:#9A9890;font-size:11px">Statut</th>
+        </tr></thead>
+        <tbody>
+          ${f.instalments.map(inst=>`
+          <tr style="border-bottom:1px solid #F0EDE8">
+            <td style="padding:8px 0">${inst.label}</td>
+            <td style="padding:8px 0;color:#6B6860">${new Date(inst.date).toLocaleDateString('fr-FR')}</td>
+            <td style="padding:8px 0;text-align:right;font-weight:500">${currency}${inst.amount.toLocaleString('fr-FR')}</td>
+            <td style="padding:8px 0;text-align:right"><span style="background:#FDF5E0;color:#B07010;font-size:10px;padding:2px 8px;border-radius:100px">En attente</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : `
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid #E5E2DA">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#9A9890;margin-bottom:8px">Mode de paiement</div>
+      <div style="font-size:13px;color:#444">${f.paymethod}</div>
+      ${f.paymethod==='Virement bancaire'&&f.isIL ? `
+      <table style="font-size:12px;line-height:1.8;color:#444;width:auto;margin-top:8px">
+        <tr><td style="color:#9A9890;padding-right:16px">Banque</td><td>Bank Leumi, succursale 806</td></tr>
+        <tr><td style="color:#9A9890;padding-right:16px">Compte</td><td>20659/73</td></tr>
+        <tr><td style="color:#9A9890;padding-right:16px">IBAN</td><td>IL200108060000002065973</td></tr>
+        <tr><td style="color:#9A9890;padding-right:16px">SWIFT</td><td>LUMIILITXXX</td></tr>
+      </table>` : ''}
+    </div>`;
+
+  document.getElementById('inv-doc').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:48px">
+      ${sellerBlock}
+      <div style="text-align:right">
+        <div style="font-size:28px;font-weight:700;color:#C4714A;letter-spacing:-.5px">FACTURE</div>
+        <div style="font-size:13px;color:#6B6860;margin-top:6px;line-height:1.8">
+          <div>N° ${invNum}</div><div>Date : ${today}</div><div>Échéance : ${due}</div>
+        </div>
+      </div>
+    </div>
+    <div style="background:#F7F5F0;border-radius:8px;padding:16px 20px;margin-bottom:32px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#9A9890;margin-bottom:8px">Facturé à</div>
+      <div style="font-size:14px;font-weight:600;color:#1a1a17">${f.name}${f.company?' — '+f.company:''}</div>
+      <div style="font-size:13px;color:#6B6860">${f.email}</div>
+      ${f.phone?`<div style="font-size:13px;color:#6B6860">${f.phone}</div>`:''}
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+      <thead><tr style="border-bottom:2px solid #1a1a17">
+        <th style="text-align:left;padding:8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9A9890">Description</th>
+        <th style="text-align:right;padding:8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9A9890">Montant</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #E5E2DA">
+          <td style="padding:14px 0;font-size:14px">${f.pkg}</td>
+          <td style="padding:14px 0;font-size:14px;text-align:right;font-weight:500">${currency}${f.total.toLocaleString('fr-FR')}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr style="border-top:2px solid #1a1a17">
+          <td style="padding:14px 0;font-size:15px;font-weight:700">Total</td>
+          <td style="padding:14px 0;font-size:20px;font-weight:700;text-align:right;color:#C4714A">${currency}${f.total.toLocaleString('fr-FR')}</td>
+        </tr>
+      </tfoot>
+    </table>
+    ${instBlock}
+    <div style="margin-top:28px;padding-top:20px;border-top:1px solid #E5E2DA;font-size:12px;color:#9A9890;text-align:center">
+      ${f.isIL ? 'Paiement à 7 jours · getmizra.com · hello@getmizra.com · עוסק מורשה 348277518' : 'lancio.fr · hello@lancio.fr'}
+    </div>`;
+
+  document.getElementById('invoice-overlay').style.display = 'flex';
 }
 </script>
 </body>

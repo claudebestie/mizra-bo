@@ -469,20 +469,21 @@ tr.unread td:first-child::before{content:'';position:absolute;left:4px;top:50%;t
     </div>
 
     <!-- Zone import PDF -->
-    <div id="fi-pdf-zone" style="max-width:900px;margin-bottom:20px;border:2px dashed var(--border2);border-radius:var(--r2);padding:20px 24px;background:var(--white);display:flex;align-items:center;gap:16px;cursor:pointer;transition:border-color .2s" onclick="document.getElementById('fi-pdf-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border2)';handlePdfDrop(event)">
-      <div style="font-size:28px">📄</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;color:var(--text)">Importer un devis PDF</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">Clique ou glisse un PDF — Claude extrait automatiquement toutes les infos</div>
+    <div style="max-width:900px;margin-bottom:20px;background:var(--white);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+        <div style="font-size:13px;font-weight:600">📄 Importer un devis PDF</div>
+        <div style="font-size:12px;color:var(--muted)">Claude analyse et pré-remplit tous les champs + crée commande &amp; onboarding automatiquement</div>
       </div>
-      <div id="fi-pdf-status" style="font-size:12px;color:var(--hint)">Aucun fichier</div>
-      <input type="file" id="fi-pdf-input" accept=".pdf" style="display:none" onchange="handlePdfFile(this.files[0])"/>
-    </div>
-
-    <!-- Loader analyse -->
-    <div id="fi-pdf-loader" style="display:none;max-width:900px;margin-bottom:16px;padding:14px 20px;background:var(--accent-l);border:1px solid #E8C4A8;border-radius:var(--r);font-size:13px;color:var(--accent);display:none;align-items:center;gap:10px">
-      <span style="display:inline-block;animation:spin 1s linear infinite">⟳</span>
-      Analyse du PDF en cours…
+      <div style="padding:16px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div id="fi-pdf-drop" onclick="document.getElementById('fi-pdf-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border2)';setPdfFile(event.dataTransfer.files[0])" style="border:2px dashed var(--border2);border-radius:var(--r);padding:12px 20px;cursor:pointer;font-size:13px;color:var(--muted);transition:border-color .2s;display:flex;align-items:center;gap:8px">
+          <span>📁</span> <span id="fi-pdf-status">Choisir un fichier PDF…</span>
+        </div>
+        <input type="file" id="fi-pdf-input" accept=".pdf" style="display:none" onchange="setPdfFile(this.files[0])"/>
+        <button id="fi-analyze-btn" class="btn btn-primary" onclick="analyzePdf()" disabled style="opacity:.4;cursor:not-allowed">⟳ Analyser le PDF</button>
+        <div id="fi-pdf-loader" style="display:none;font-size:13px;color:var(--accent);display:none;align-items:center;gap:6px">
+          <span style="display:inline-block;animation:spin 1s linear infinite;font-size:16px">⟳</span> Analyse en cours…
+        </div>
+      </div>
     </div>
     <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
@@ -567,13 +568,15 @@ tr.unread td:first-child::before{content:'';position:absolute;left:4px;top:50%;t
             <input type="checkbox" id="fi-installments-toggle" onchange="toggleInstallments()" style="width:16px;height:16px;accent-color:var(--accent)"/>
             Paiement en plusieurs fois
           </label>
-          <select id="fi-nb-inst" style="display:none;padding:5px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px" onchange="buildInstalmentRows()">
-            <option value="2">2 versements</option>
-            <option value="3">3 versements</option>
-          </select>
         </div>
 
-        <div id="fi-inst-rows" style="display:none;flex-direction:column;gap:10px"></div>
+        <div id="fi-inst-wrap" style="display:none;flex-direction:column;gap:10px">
+          <div id="fi-inst-rows" style="display:flex;flex-direction:column;gap:8px"></div>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button type="button" class="btn btn-ghost" onclick="addInstalment()" style="font-size:12px;padding:6px 12px">+ Ajouter un versement</button>
+            <button type="button" class="btn btn-danger" onclick="removeInstalment()" style="font-size:12px;padding:6px 12px">− Supprimer le dernier</button>
+          </div>
+        </div>
 
       </div>
 
@@ -1380,21 +1383,30 @@ function openInvoice(type, id){
 
 // ── PDF IMPORT ────────────────────────────────────────────────────────────────
 
-function handlePdfDrop(e){
-  const f = e.dataTransfer.files[0];
-  if(f && f.type==='application/pdf') handlePdfFile(f);
+let _pdfFile = null;
+
+function setPdfFile(file){
+  if(!file || file.type !== 'application/pdf') return;
+  _pdfFile = file;
+  document.getElementById('fi-pdf-status').textContent = file.name;
+  document.getElementById('fi-pdf-drop').style.borderColor = 'var(--accent)';
+  const btn = document.getElementById('fi-analyze-btn');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.style.cursor = 'pointer';
 }
 
-async function handlePdfFile(file){
-  if(!file) return;
-  const statusEl = document.getElementById('fi-pdf-status');
+async function analyzePdf(){
+  if(!_pdfFile){ fiLog('Aucun fichier sélectionné.', false); return; }
   const loader = document.getElementById('fi-pdf-loader');
-  statusEl.textContent = file.name;
+  const btn = document.getElementById('fi-analyze-btn');
   loader.style.display = 'flex';
+  btn.disabled = true;
+  btn.style.opacity = '.4';
   fiLog('');
 
   try {
-    const base64 = await fileToBase64(file);
+    const base64 = await fileToBase64(_pdfFile);
 
     const response = await fetch('/api/analyze-pdf', {
       method: 'POST',
@@ -1410,48 +1422,40 @@ async function handlePdfFile(file){
     const parsed = await response.json();
 
     // Remplir les champs
-    if(parsed.name)       document.getElementById('fi-name').value = parsed.name;
-    if(parsed.email)      document.getElementById('fi-email').value = parsed.email;
-    if(parsed.phone)      document.getElementById('fi-phone').value = parsed.phone;
-    if(parsed.company)    document.getElementById('fi-company').value = parsed.company;
-    if(parsed.package)    document.getElementById('fi-package').value = parsed.package;
-    if(parsed.total)      document.getElementById('fi-total').value = parsed.total;
+    if(parsed.name)    document.getElementById('fi-name').value = parsed.name;
+    if(parsed.email)   document.getElementById('fi-email').value = parsed.email;
+    if(parsed.phone)   document.getElementById('fi-phone').value = parsed.phone || '';
+    if(parsed.company) document.getElementById('fi-company').value = parsed.company;
+    if(parsed.package) document.getElementById('fi-package').value = parsed.package;
+    if(parsed.total)   document.getElementById('fi-total').value = parsed.total;
+    if(parsed.source)  document.getElementById('fi-source').value = parsed.source;
+    if(parsed.notes)   document.getElementById('fi-notes').value = parsed.notes || '';
     if(parsed.paymethod){
       const sel = document.getElementById('fi-paymethod');
       const opts = [...sel.options].map(o=>o.value);
-      sel.value = opts.includes(parsed.paymethod) ? parsed.paymethod : 'Virement bancaire';
-    }
-    if(parsed.source){
-      document.getElementById('fi-source').value = parsed.source;
+      sel.value = opts.find(v => v.toLowerCase().includes(parsed.paymethod.toLowerCase())) || 'Virement bancaire';
     }
 
     // Versements
-    if(parsed.instalments && parsed.instalments.length > 1){
+    if(parsed.instalments && parsed.instalments.length >= 2){
       document.getElementById('fi-installments-toggle').checked = true;
-      const nb = parsed.instalments.length;
-      const nbSel = document.getElementById('fi-nb-inst');
-      nbSel.style.display = 'inline-block';
-      nbSel.value = nb <= 3 ? nb : 3;
-      document.getElementById('fi-inst-rows').style.display = 'flex';
-      // Build rows first
-      buildInstalmentRows();
-      // Then override with parsed values
+      document.getElementById('fi-inst-wrap').style.display = 'flex';
+      // Build rows from parsed data
+      const rows = document.getElementById('fi-inst-rows');
+      rows.innerHTML = '';
       parsed.instalments.forEach((inst, i) => {
-        const amtEl = document.getElementById(`inst-amt-${i}`);
-        const dateEl = document.getElementById(`inst-date-${i}`);
-        if(amtEl) amtEl.value = inst.amount;
-        if(dateEl && inst.date) dateEl.value = inst.date;
+        addInstalmentRow(inst.label, inst.amount, inst.date);
       });
     }
 
-    if(parsed.notes)      document.getElementById('fi-notes').value = parsed.notes;
-
     loader.style.display = 'none';
-    fiLog(`✓ PDF analysé : ${parsed.company || parsed.name} — infos pré-remplies. Vérifie et ajuste si besoin.`);
+    btn.disabled = false; btn.style.opacity = '1';
+    fiLog(`✓ PDF analysé — ${parsed.company || parsed.name}. Champs pré-remplis. Clique sur "Créer + Injecter" pour valider.`);
 
   } catch(err) {
     loader.style.display = 'none';
-    fiLog('Erreur lors de l\'analyse du PDF : ' + err.message, false);
+    btn.disabled = false; btn.style.opacity = '1';
+    fiLog('Erreur analyse PDF : ' + err.message, false);
   }
 }
 
@@ -1464,137 +1468,153 @@ function fileToBase64(file){
   });
 }
 
+// ── VERSEMENTS ILLIMITÉS ──────────────────────────────────────────────────────
 
+let _instCount = 0;
 
 function toggleInstallments(){
   const on = document.getElementById('fi-installments-toggle').checked;
-  document.getElementById('fi-nb-inst').style.display = on ? 'inline-block' : 'none';
-  document.getElementById('fi-inst-rows').style.display = on ? 'flex' : 'none';
-  if(on) buildInstalmentRows();
-}
-
-function buildInstalmentRows(){
-  const n = parseInt(document.getElementById('fi-nb-inst').value)||2;
-  const total = parseFloat(document.getElementById('fi-total').value)||0;
-  const source = document.getElementById('fi-source').value;
-  const sym = source==='fr' ? '€' : '₪';
-  const perPart = total ? Math.round((total/n)*100)/100 : '';
-  const today = new Date();
-  const rows = document.getElementById('fi-inst-rows');
-  rows.innerHTML = '';
-  for(let i=0;i<n;i++){
-    const d = new Date(today); d.setMonth(d.getMonth()+i);
-    const dateStr = d.toISOString().split('T')[0];
-    const label = i===0 ? 'Acompte' : (i===n-1 ? 'Solde' : `Versement ${i+1}`);
-    rows.innerHTML += `
-      <div style="display:grid;grid-template-columns:120px 1fr 160px;gap:10px;align-items:center;background:var(--bg);padding:10px 14px;border-radius:var(--r)">
-        <div style="font-size:12px;font-weight:600;color:var(--muted)">${label}</div>
-        <div class="field-m" style="margin:0">
-          <input type="number" id="inst-amt-${i}" value="${perPart}" placeholder="${sym}..." style="width:100%"/>
-        </div>
-        <div class="field-m" style="margin:0">
-          <input type="date" id="inst-date-${i}" value="${dateStr}" style="width:100%"/>
-        </div>
-      </div>`;
+  document.getElementById('fi-inst-wrap').style.display = on ? 'flex' : 'none';
+  if(on && _instCount === 0){
+    const total = parseFloat(document.getElementById('fi-total').value)||0;
+    const today = new Date().toISOString().split('T')[0];
+    const next = new Date(); next.setMonth(next.getMonth()+1);
+    const nextStr = next.toISOString().split('T')[0];
+    addInstalmentRow('Acompte', total ? Math.round(total/2) : '', today);
+    addInstalmentRow('Solde', total ? Math.round(total/2) : '', nextStr);
   }
 }
 
-function updateInstalmentsFromTotal(){
-  const on = document.getElementById('fi-installments-toggle').checked;
-  if(on) buildInstalmentRows();
+function addInstalment(){
+  const i = _instCount;
+  const label = i === 0 ? 'Acompte' : (i === 1 ? 'Solde' : `Versement ${i+1}`);
+  const d = new Date(); d.setMonth(d.getMonth()+i);
+  addInstalmentRow(label, '', d.toISOString().split('T')[0]);
+}
+
+function addInstalmentRow(label='', amount='', date=''){
+  const i = _instCount++;
+  const rows = document.getElementById('fi-inst-rows');
+  const div = document.createElement('div');
+  div.id = `inst-row-${i}`;
+  div.style.cssText = 'display:grid;grid-template-columns:130px 1fr 160px;gap:10px;align-items:center;background:var(--bg);padding:10px 14px;border-radius:var(--r)';
+  div.innerHTML = `
+    <input type="text" id="inst-lbl-${i}" value="${label}" placeholder="Label" style="width:100%;border:1px solid var(--border);border-radius:var(--r);padding:6px 8px;font-size:12px;font-family:inherit"/>
+    <input type="number" id="inst-amt-${i}" value="${amount}" placeholder="Montant…" style="width:100%;border:1px solid var(--border);border-radius:var(--r);padding:6px 8px;font-size:13px;font-family:inherit"/>
+    <input type="date" id="inst-date-${i}" value="${date}" style="width:100%;border:1px solid var(--border);border-radius:var(--r);padding:6px 8px;font-size:13px;font-family:inherit"/>`;
+  rows.appendChild(div);
+}
+
+function removeInstalment(){
+  if(_instCount <= 1) return;
+  _instCount--;
+  const row = document.getElementById(`inst-row-${_instCount}`);
+  if(row) row.remove();
 }
 
 function getInstalmentsData(){
   const on = document.getElementById('fi-installments-toggle').checked;
   if(!on) return null;
-  const n = parseInt(document.getElementById('fi-nb-inst').value)||2;
   const parts = [];
-  for(let i=0;i<n;i++){
+  for(let i=0;i<_instCount;i++){
+    const lbl = document.getElementById(`inst-lbl-${i}`);
+    const amt = document.getElementById(`inst-amt-${i}`);
+    const dt  = document.getElementById(`inst-date-${i}`);
+    if(!lbl) continue;
     parts.push({
-      label: i===0?'Acompte':(i===n-1?'Solde':`Versement ${i+1}`),
-      amount: parseFloat(document.getElementById(`inst-amt-${i}`).value)||0,
-      date: document.getElementById(`inst-date-${i}`).value,
-      status:'En attente'
+      label: lbl.value || `Versement ${i+1}`,
+      amount: parseFloat(amt?.value)||0,
+      date: dt?.value||'',
+      status: 'En attente'
     });
   }
-  return parts;
+  return parts.length ? parts : null;
 }
 
+// ── FORM HELPERS ──────────────────────────────────────────────────────────────
+
 function getManualOrderObj(){
-  const source = document.getElementById('fi-source').value;
-  const isIL = source === 'il';
-  const name = document.getElementById('fi-name').value.trim();
-  const email = document.getElementById('fi-email').value.trim();
-  const pkg = document.getElementById('fi-package').value.trim();
-  const total = parseFloat(document.getElementById('fi-total').value)||0;
-  const paymethod = document.getElementById('fi-paymethod').value;
-  const paystatus = document.getElementById('fi-paystatus').value;
-  const notes = document.getElementById('fi-notes').value.trim();
-  const company = document.getElementById('fi-company').value.trim();
-  const phone = document.getElementById('fi-phone').value.trim();
+  const source   = document.getElementById('fi-source').value;
+  const name     = document.getElementById('fi-name').value.trim();
+  const email    = document.getElementById('fi-email').value.trim();
+  const pkg      = document.getElementById('fi-package').value.trim();
+  const total    = parseFloat(document.getElementById('fi-total').value)||0;
+  const paymethod= document.getElementById('fi-paymethod').value;
+  const paystatus= document.getElementById('fi-paystatus').value;
+  const notes    = document.getElementById('fi-notes').value.trim();
+  const company  = document.getElementById('fi-company').value.trim();
+  const phone    = document.getElementById('fi-phone').value.trim();
   const instalments = getInstalmentsData();
-  return { isIL, name, email, pkg, total, paymethod, paystatus, notes, company, phone, instalments, source };
+  return { isIL: source==='il', source, name, email, pkg, total, paymethod, paystatus, notes, company, phone, instalments };
 }
 
 function fiLog(msg, ok=true){
   const el = document.getElementById('fi-log');
-  el.style.display='block';
+  if(!msg){ el.style.display='none'; return; }
+  el.style.display = 'block';
   el.style.background = ok ? 'var(--green-l)' : 'var(--red-l)';
-  el.style.color = ok ? 'var(--green)' : 'var(--red)';
-  el.style.border = `1px solid ${ok?'#B8DFC8':'#F0CACA'}`;
+  el.style.color      = ok ? 'var(--green)'   : 'var(--red)';
+  el.style.border     = `1px solid ${ok?'#B8DFC8':'#F0CACA'}`;
   el.textContent = msg;
 }
 
 async function createAndInject(){
   const f = getManualOrderObj();
-  if(!f.name||!f.email||!f.pkg||!f.total){ fiLog('Remplis les champs obligatoires : nom, email, formule, montant.',false); return; }
+  if(!f.name)  { fiLog('Champ manquant : nom du client', false); return; }
+  if(!f.email) { fiLog('Champ manquant : email', false); return; }
+  if(!f.pkg)   { fiLog('Champ manquant : description / formule', false); return; }
+  if(!f.total) { fiLog('Champ manquant : montant total', false); return; }
 
-  const id = crypto.randomUUID();
+  const id  = crypto.randomUUID();
   const now = new Date().toISOString();
 
   const orderPayload = {
     id,
-    payer_name: f.name,
-    payer_email: f.email,
-    package: f.pkg,
-    total_price: f.total,
+    payer_name:     f.name,
+    payer_email:    f.email,
+    package:        f.pkg,
+    total_price:    f.total,
     payment_method: f.paymethod,
     payment_status: f.paystatus,
-    status: 'new',
-    seen: false,
-    created_at: now,
-    ...(f.company && { business_name: f.company }),
-    ...(f.phone && { phone: f.phone }),
+    status:         'new',
+    seen:           false,
+    created_at:     now,
+    manual:         true,
+    ...(f.company    && { business_name: f.company }),
+    ...(f.phone      && { phone: f.phone }),
     ...(f.instalments && { instalments: f.instalments }),
-    manual: true,
   };
 
   const onbPayload = {
-    id: crypto.randomUUID(),
-    order_id: id,
-    client_name: f.name,
-    business_name: f.company || f.name,
-    email: f.email,
-    status: 'new',
-    done: false,
-    seen: false,
+    id:             crypto.randomUUID(),
+    order_id:       id,
+    client_name:    f.name,
+    business_name:  f.company || f.name,
+    email:          f.email,
+    status:         'new',
+    done:           false,
+    seen:           false,
     internal_notes: f.notes || '',
-    created_at: now,
+    created_at:     now,
   };
 
-  const ordTable = f.isIL ? 'orders' : 'lancio_orders';
+  const ordTable = f.isIL ? 'orders'     : 'lancio_orders';
   const onbTable = f.isIL ? 'onboarding' : 'lancio_onboarding';
 
   try {
-    const r1 = await fetch(`${SB}/rest/v1/${ordTable}`,{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(orderPayload)});
-    const r2 = await fetch(`${SB}/rest/v1/${onbTable}`,{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(onbPayload)});
-    if(!r1.ok||!r2.ok) throw new Error('Erreur Supabase');
+    const r1 = await fetch(`${SB}/rest/v1/${ordTable}`, { method:'POST', headers:{...H,'Prefer':'return=minimal'}, body:JSON.stringify(orderPayload) });
+    const r2 = await fetch(`${SB}/rest/v1/${onbTable}`, { method:'POST', headers:{...H,'Prefer':'return=minimal'}, body:JSON.stringify(onbPayload)  });
+    if(!r1.ok || !r2.ok){
+      const e1 = await r1.text(); const e2 = await r2.text();
+      throw new Error(e1 || e2 || 'Erreur Supabase');
+    }
     fiLog(`✓ Commande + Onboarding créés pour ${f.name} — ${f.isIL?'₪':'€'}${f.total.toLocaleString('fr-FR')}`);
     await loadAll();
   } catch(e){
-    fiLog('Erreur lors de l\'injection : '+e.message, false);
+    fiLog('Erreur injection Supabase : ' + e.message, false);
   }
 }
+
 
 function previewManualInvoice(){
   const f = getManualOrderObj();

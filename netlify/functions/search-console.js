@@ -84,19 +84,6 @@ exports.handler = async (event) => {
 
     const token = await getAccessToken();
 
-    // Debug: test a simple query first
-    const testQuery = await querySearchConsole(token, siteUrl, { startDate, endDate, dimensions: ['date'], rowLimit: 5 });
-    console.log('GSC debug - siteUrl:', siteUrl, 'status:', testQuery.status, 'response:', JSON.stringify(testQuery.body).substring(0, 500));
-
-    // If test returned an error, return it for debugging
-    if (testQuery.body.error) {
-      return {
-        statusCode: 200,
-        headers: { ...cors, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'GSC API error: ' + JSON.stringify(testQuery.body.error), debug: { siteUrl, startDate, endDate } }),
-      };
-    }
-
     // Fetch multiple dimension queries in parallel
     const [queries, pages, countries, dates] = await Promise.all([
       querySearchConsole(token, siteUrl, { startDate, endDate, dimensions: ['query'], rowLimit: 50 }),

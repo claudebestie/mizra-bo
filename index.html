@@ -94,6 +94,576 @@ tr.unread td:first-child::before{content:'';position:absolute;left:4px;top:50%;t
 .badge-done{background:var(--green-l);color:var(--green)}
 .dot{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
 
+<!-- ============================================================
+  MARKETING PAGE — à injecter dans index.html de mizra-bo
+  
+  1. Dans la sidebar, ajouter dans la section "Vue globale" :
+  
+  <div class="nav-section">Marketing</div>
+  <div class="nav-item lancio-item" onclick="nav('marketing')" id="nav-marketing">
+    <span>📈</span> Marketing
+  </div>
+  
+  2. Ajouter ce bloc complet avant la balise </div> qui ferme .main
+  ============================================================ -->
+
+<!-- ── MARKETING PAGE ── -->
+<div class="page" id="page-marketing">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-title">📈 Marketing <small id="mkt-period"></small></div>
+    <div class="page-actions">
+      <input type="date" id="mkt-from" style="border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;font-size:12px;font-family:inherit;outline:none;background:var(--white)">
+      <span style="color:var(--hint);font-size:12px">→</span>
+      <input type="date" id="mkt-to" style="border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;font-size:12px;font-family:inherit;outline:none;background:var(--white)">
+      <button class="btn btn-primary fr" onclick="loadMarketing()" id="mkt-load-btn">Charger</button>
+      <button class="btn" style="background:var(--accent);color:white" onclick="runAiAnalysis()" id="mkt-ai-btn" disabled>✦ Analyse IA</button>
+    </div>
+  </div>
+
+  <!-- Config tokens (collapsible) -->
+  <div id="mkt-config" style="background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:16px 20px;margin-bottom:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleMktConfig()">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint)">⚙ Connexion API</div>
+      <div id="mkt-config-arrow" style="color:var(--hint);font-size:12px">▼</div>
+    </div>
+    <div id="mkt-config-body" style="margin-top:14px;display:grid;grid-template-columns:160px 1fr 1fr;gap:12px">
+      <div class="field-m">
+        <label>Meta Account ID</label>
+        <input type="text" id="mkt-meta-account" placeholder="1338031704830311" value="1338031704830311">
+      </div>
+      <div class="field-m">
+        <label>Meta Access Token</label>
+        <input type="password" id="mkt-meta-token" placeholder="EAAxxxxxxx" value="EAA7hryYPRRwBRG8YfmwsGdZClnLUS2U6jMstoYJFWf86MkIJl7HS1GZAZB2KfZAsMndkajmmkZA9LCc2CWSlm5U1ZCEhZA5RlqGnkBeUpwbTET1qn4JBe3yR56aQA3F2lvK1dlwo6NfCbrDFAvQQXhK3iLaMaLCsqPUcZCfeYPAgCUTzTjZBdcGOODQczjS9xSZBVTIqTKeacXgGPZAPKp2A5xfZBU6e0UUVEBTjgCQOXUd5bzQ9jI4NSxJl0SkrZArY4yl6SQ26YAJxZBe31OoWknIgZDZD">
+      </div>
+      <div class="field-m">
+        <label>GSC Site URL</label>
+        <input type="text" id="mkt-gsc-site" placeholder="sc-domain:lancio.fr" value="sc-domain:lancio.fr">
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--hint);margin-top:10px">
+      💡 Search Console est géré via Netlify Function (variables d'environnement). Meta Ads est appelé directement depuis le navigateur.
+    </div>
+  </div>
+
+  <!-- Error box -->
+  <div id="mkt-error" style="display:none;background:var(--red-l);border:1px solid #F0CACA;border-radius:var(--r);padding:12px 16px;color:var(--red);font-size:13px;margin-bottom:16px"></div>
+
+  <!-- Loading -->
+  <div id="mkt-loading" style="display:none;text-align:center;padding:40px;color:var(--hint);font-size:13px">
+    <div style="font-size:24px;margin-bottom:8px;animation:spin 1s linear infinite;display:inline-block">⟳</div>
+    <div id="mkt-loading-msg">Chargement des données…</div>
+  </div>
+
+  <!-- KPI Overview -->
+  <div id="mkt-kpis" style="display:none">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="mkt-kpi-meta">
+      <!-- filled by JS -->
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="mkt-kpi-gsc">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- Tabs: Meta / GSC / IA -->
+  <div id="mkt-tabs" style="display:none">
+    <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:0;background:var(--white);border-radius:var(--r2) var(--r2) 0 0;padding:0 16px">
+      <button class="tab active" onclick="switchMktTab(this,'mkt-panel-meta')">Meta Ads</button>
+      <button class="tab" onclick="switchMktTab(this,'mkt-panel-gsc')">Search Console</button>
+      <button class="tab" onclick="switchMktTab(this,'mkt-panel-ai')">✦ Analyse IA</button>
+    </div>
+
+    <div style="background:var(--white);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r2) var(--r2);overflow:hidden">
+
+      <!-- META ADS PANEL -->
+      <div id="mkt-panel-meta" class="mkt-panel" style="display:block;padding:20px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:12px">Campagnes</div>
+        <div class="table-wrap" style="margin-bottom:20px"><table id="mkt-camps-table"></table></div>
+
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:12px">Adsets</div>
+        <div class="table-wrap" style="margin-bottom:20px"><table id="mkt-adsets-table"></table></div>
+
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:12px">Publicités</div>
+        <div class="table-wrap"><table id="mkt-ads-table"></table></div>
+      </div>
+
+      <!-- SEARCH CONSOLE PANEL -->
+      <div id="mkt-panel-gsc" class="mkt-panel" style="display:none;padding:20px">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:12px">Top 25 Requêtes</div>
+            <div class="table-wrap"><table id="mkt-gsc-queries"></table></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:12px">Top Pages</div>
+            <div class="table-wrap"><table id="mkt-gsc-pages"></table></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:6px">⚡ Quick Wins — Requêtes en position 6–15</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Ces mots-clés sont proches du top 5 — optimise leur page pour gagner des clics rapidement</div>
+          <div class="table-wrap"><table id="mkt-gsc-quickwins"></table></div>
+        </div>
+      </div>
+
+      <!-- AI ANALYSIS PANEL -->
+      <div id="mkt-panel-ai" class="mkt-panel" style="display:none;padding:20px">
+        <div id="mkt-ai-empty" style="text-align:center;padding:48px;color:var(--hint)">
+          <div style="font-size:32px;margin-bottom:8px">✦</div>
+          <div style="font-size:13px;margin-bottom:16px">Charge d'abord les données Meta + GSC, puis clique sur <strong>Analyse IA</strong></div>
+          <button class="btn btn-primary" style="background:var(--accent)" onclick="runAiAnalysis()" id="mkt-ai-btn2">✦ Lancer l'analyse</button>
+        </div>
+        <div id="mkt-ai-loading" style="display:none;text-align:center;padding:48px;color:var(--hint)">
+          <div style="font-size:32px;margin-bottom:8px;animation:spin 1s linear infinite;display:inline-block">⟳</div>
+          <div>Claude analyse tes données…</div>
+        </div>
+        <div id="mkt-ai-result" style="display:none"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<style>
+/* Tab styles for marketing page */
+.tab {
+  padding:12px 20px;
+  font-size:13px;
+  font-weight:500;
+  color:var(--muted);
+  border:none;
+  background:none;
+  cursor:pointer;
+  border-bottom:2px solid transparent;
+  margin-bottom:-1px;
+  transition:color .15s;
+  font-family:inherit;
+}
+.tab:hover{color:var(--fr)}
+.tab.active{color:var(--fr);border-bottom-color:var(--fr);font-weight:600}
+
+/* CTR bar */
+.ctr-bar-w{display:flex;align-items:center;gap:6px}
+.ctr-bar-bg{width:40px;height:4px;background:var(--border);border-radius:2px;flex-shrink:0}
+.ctr-bar-fill{height:100%;border-radius:2px;background:var(--fr)}
+
+/* Score ring */
+.score-ring {
+  width:64px;height:64px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:700;
+  border:3px solid currentColor;
+  flex-shrink:0;
+}
+
+/* AI reco card */
+.reco-card {
+  background:var(--white);border:1px solid var(--border);border-radius:var(--r2);
+  padding:16px 20px;margin-bottom:12px;
+  display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;
+}
+.reco-prio {
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+  padding:3px 8px;border-radius:100px;white-space:nowrap;
+}
+.prio-haute{background:#FCF0F0;color:var(--red)}
+.prio-moyenne{background:var(--amber-l);color:var(--amber)}
+.prio-basse{background:var(--green-l);color:var(--green)}
+
+.reco-action{font-weight:600;font-size:13px;margin-bottom:4px}
+.reco-impact{font-size:12px;color:var(--fr);margin-bottom:4px}
+.reco-detail{font-size:12px;color:var(--muted)}
+</style>
+
+<script>
+// ── Marketing state ─────────────────────────────────────────────────────────
+let mktData = { meta: null, gsc: null };
+let mktConfigOpen = true;
+
+function toggleMktConfig() {
+  mktConfigOpen = !mktConfigOpen;
+  document.getElementById('mkt-config-body').style.display = mktConfigOpen ? 'grid' : 'none';
+  document.getElementById('mkt-config-arrow').textContent = mktConfigOpen ? '▼' : '▶';
+}
+
+function switchMktTab(btn, panelId) {
+  document.querySelectorAll('#page-marketing .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.mkt-panel').forEach(p => p.style.display = 'none');
+  btn.classList.add('active');
+  document.getElementById(panelId).style.display = 'block';
+}
+
+// Set default dates
+(function() {
+  const today = new Date();
+  const d30 = new Date(); d30.setDate(today.getDate() - 30);
+  document.getElementById('mkt-to').value = today.toISOString().split('T')[0];
+  document.getElementById('mkt-from').value = d30.toISOString().split('T')[0];
+})();
+
+const mktFmt = (n, d = 0) => (n == null || n === '') ? '—' : parseFloat(n).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const mktCtrCell = (ctr) => `<div class="ctr-bar-w"><div class="ctr-bar-bg"><div class="ctr-bar-fill" style="width:${Math.min(ctr*25,100)}%"></div></div><span style="font-size:12px;${ctr>=1.5?'color:var(--green);font-weight:600':ctr<0.8?'color:var(--red)':''}">${mktFmt(ctr,2)}%</span></div>`;
+
+function mktShowError(msg) {
+  const el = document.getElementById('mkt-error');
+  el.style.display = 'block';
+  el.textContent = '⚠ ' + msg;
+}
+
+function mktHideError() {
+  document.getElementById('mkt-error').style.display = 'none';
+}
+
+function mktKpiCard(label, value, sub, color) {
+  return `<div class="stat-card" style="border-top:3px solid ${color}">
+    <div class="stat-label">${label}</div>
+    <div class="stat-val" style="font-size:22px">${value}</div>
+    <div class="stat-sub">${sub}</div>
+  </div>`;
+}
+
+function mktTable(headers, rows, emptyMsg) {
+  if (!rows.length) return `<div class="empty" style="padding:24px">${emptyMsg}</div>`;
+  return `<table><thead><tr>${headers.map(h => `<th${h.right?' style="text-align:right"':''}>${h.label}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(r => `<tr>${headers.map(h => `<td${h.right?' style="text-align:right"':''}>${r[h.key] ?? '—'}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+
+async function loadMarketing() {
+  mktHideError();
+  document.getElementById('mkt-loading').style.display = 'block';
+  document.getElementById('mkt-kpis').style.display = 'none';
+  document.getElementById('mkt-tabs').style.display = 'none';
+  document.getElementById('mkt-load-btn').disabled = true;
+
+  const from = document.getElementById('mkt-from').value;
+  const to = document.getElementById('mkt-to').value;
+  document.getElementById('mkt-period').textContent = from + ' → ' + to;
+
+  const errors = [];
+
+  // ── Load Meta Ads ──────────────────────────────────────────────────────────
+  document.getElementById('mkt-loading-msg').textContent = 'Chargement Meta Ads…';
+  try {
+    const acct = document.getElementById('mkt-meta-account').value.trim();
+    const token = document.getElementById('mkt-meta-token').value.trim();
+    const tr = encodeURIComponent(JSON.stringify({ since: from, until: to }));
+    const iF = `insights.time_range(${tr}){spend,impressions,clicks,ctr,cpc,reach,frequency}`;
+
+    const [C, A, AD] = await Promise.all([
+      fetch(`https://graph.facebook.com/v25.0/act_${acct}/campaigns?fields=name,status,objective,${iF}&limit=50&access_token=${token}`).then(r => r.json()),
+      fetch(`https://graph.facebook.com/v25.0/act_${acct}/adsets?fields=name,status,${iF}&limit=50&access_token=${token}`).then(r => r.json()),
+      fetch(`https://graph.facebook.com/v25.0/act_${acct}/ads?fields=name,status,${iF}&limit=100&access_token=${token}`).then(r => r.json()),
+    ]);
+
+    if (C.error) throw new Error('Meta: ' + C.error.message);
+    mktData.meta = { campaigns: C.data || [], adsets: A.data || [], ads: AD.data || [] };
+    renderMetaSection();
+  } catch(e) {
+    errors.push(e.message);
+    mktData.meta = null;
+  }
+
+  // ── Load Search Console ────────────────────────────────────────────────────
+  document.getElementById('mkt-loading-msg').textContent = 'Chargement Search Console…';
+  try {
+    const siteUrl = document.getElementById('mkt-gsc-site').value.trim();
+    const resp = await fetch('/.netlify/functions/search-console', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ siteUrl, startDate: from, endDate: to }),
+    });
+    const gscResult = await resp.json();
+    if (gscResult.error) throw new Error('GSC: ' + gscResult.error);
+    mktData.gsc = gscResult;
+    renderGscSection();
+  } catch(e) {
+    errors.push(e.message);
+    mktData.gsc = null;
+  }
+
+  document.getElementById('mkt-loading').style.display = 'none';
+  document.getElementById('mkt-load-btn').disabled = false;
+
+  if (errors.length) mktShowError(errors.join(' | '));
+
+  if (mktData.meta || mktData.gsc) {
+    renderMktKpis();
+    document.getElementById('mkt-kpis').style.display = 'block';
+    document.getElementById('mkt-tabs').style.display = 'block';
+    document.getElementById('mkt-ai-btn').disabled = false;
+    toggleMktConfig(); // collapse config
+  }
+}
+
+function mktIns(item) {
+  return item.insights?.data?.[0] || {};
+}
+
+function renderMktKpis() {
+  // Meta KPIs
+  if (mktData.meta) {
+    let spend=0, impr=0, clicks=0, reach=0;
+    mktData.meta.campaigns.forEach(c => {
+      const i = mktIns(c);
+      spend += parseFloat(i.spend||0);
+      impr += parseInt(i.impressions||0);
+      clicks += parseInt(i.clicks||0);
+      reach += parseInt(i.reach||0);
+    });
+    const ctr = impr > 0 ? clicks/impr*100 : 0;
+    const cpc = clicks > 0 ? spend/clicks : 0;
+    document.getElementById('mkt-kpi-meta').innerHTML =
+      `<div style="grid-column:1/-1;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:-4px">📣 Meta Ads</div>` +
+      mktKpiCard('Dépenses', mktFmt(spend,2)+' €', 'total période', '#1877F2') +
+      mktKpiCard('Impressions', mktFmt(impr), 'affichages', '#1877F2') +
+      mktKpiCard('CTR', mktFmt(ctr,2)+'%', 'taux de clic', ctr>=1.5?'var(--green)':ctr<0.8?'var(--red)':'var(--amber)') +
+      mktKpiCard('CPC', mktFmt(cpc,2)+' €', 'coût par clic', '#1877F2');
+  }
+
+  // GSC KPIs
+  if (mktData.gsc) {
+    const rows = mktData.gsc.dates || [];
+    const totalClicks = rows.reduce((s,r) => s+r.clicks, 0);
+    const totalImpr = rows.reduce((s,r) => s+r.impressions, 0);
+    const avgCtr = totalImpr > 0 ? totalClicks/totalImpr*100 : 0;
+    const avgPos = rows.length > 0 ? rows.reduce((s,r) => s + r.position * r.impressions, 0) / (totalImpr||1) : 0;
+    document.getElementById('mkt-kpi-gsc').innerHTML =
+      `<div style="grid-column:1/-1;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:-4px">🔍 Search Console</div>` +
+      mktKpiCard('Clics organiques', mktFmt(totalClicks), 'depuis Google', 'var(--green)') +
+      mktKpiCard('Impressions', mktFmt(totalImpr), 'affichages SERP', 'var(--green)') +
+      mktKpiCard('CTR organique', mktFmt(avgCtr,2)+'%', 'clics / impressions', avgCtr>=2?'var(--green)':'var(--amber)') +
+      mktKpiCard('Position moy.', mktFmt(avgPos,1), 'rang Google', avgPos<=10?'var(--green)':avgPos<=20?'var(--amber)':'var(--red)');
+  }
+}
+
+function renderMetaSection() {
+  const { campaigns, adsets, ads } = mktData.meta;
+
+  const campRows = campaigns.map(c => {
+    const i = mktIns(c);
+    return {
+      name: `<span style="font-weight:600">${c.name}</span><br><span style="font-size:11px;color:var(--hint)">${(c.objective||'').replace(/_/g,' ').toLowerCase()}</span>`,
+      status: `<span class="badge ${c.status==='ACTIVE'?'badge-done':c.status==='PAUSED'?'badge-new':''}"><span class="dot"></span>${c.status==='ACTIVE'?'Active':'Pausée'}</span>`,
+      spend: mktFmt(i.spend,2)+' €',
+      impr: mktFmt(i.impressions),
+      clicks: mktFmt(i.clicks),
+      ctr: mktCtrCell(parseFloat(i.ctr||0)),
+      cpc: mktFmt(i.cpc,2)+' €',
+    };
+  });
+  document.getElementById('mkt-camps-table').outerHTML = `<table id="mkt-camps-table">${mktTable(
+    [{key:'name',label:'Campagne'},{key:'status',label:'Statut'},{key:'spend',label:'Dépenses',right:true},{key:'impr',label:'Impressions',right:true},{key:'clicks',label:'Clics',right:true},{key:'ctr',label:'CTR'},{key:'cpc',label:'CPC',right:true}],
+    campRows, 'Aucune campagne'
+  ).replace('<table>','').replace('</table>','')}</table>`;
+
+  const adsetRows = adsets.map(a => {
+    const i = mktIns(a);
+    return {
+      name: `<span style="font-weight:600">${a.name}</span>`,
+      status: `<span class="badge ${a.status==='ACTIVE'?'badge-done':'badge-new'}"><span class="dot"></span>${a.status==='ACTIVE'?'Active':'Pausée'}</span>`,
+      spend: mktFmt(i.spend,2)+' €',
+      impr: mktFmt(i.impressions),
+      clicks: mktFmt(i.clicks),
+      ctr: mktCtrCell(parseFloat(i.ctr||0)),
+      cpc: mktFmt(i.cpc,2)+' €',
+    };
+  });
+  document.getElementById('mkt-adsets-table').outerHTML = `<table id="mkt-adsets-table">${mktTable(
+    [{key:'name',label:'Adset'},{key:'status',label:'Statut'},{key:'spend',label:'Dépenses',right:true},{key:'impr',label:'Impressions',right:true},{key:'clicks',label:'Clics',right:true},{key:'ctr',label:'CTR'},{key:'cpc',label:'CPC',right:true}],
+    adsetRows, 'Aucun adset'
+  ).replace('<table>','').replace('</table>','')}</table>`;
+
+  const adRows = ads.map(a => {
+    const i = mktIns(a);
+    return {
+      name: `<span style="font-weight:600">${a.name}</span>`,
+      status: `<span class="badge ${a.status==='ACTIVE'?'badge-done':'badge-new'}"><span class="dot"></span>${a.status==='ACTIVE'?'Active':'Pausée'}</span>`,
+      spend: mktFmt(i.spend,2)+' €',
+      impr: mktFmt(i.impressions),
+      clicks: mktFmt(i.clicks),
+      ctr: mktCtrCell(parseFloat(i.ctr||0)),
+      cpc: mktFmt(i.cpc,2)+' €',
+    };
+  });
+  document.getElementById('mkt-ads-table').outerHTML = `<table id="mkt-ads-table">${mktTable(
+    [{key:'name',label:'Publicité'},{key:'status',label:'Statut'},{key:'spend',label:'Dépenses',right:true},{key:'impr',label:'Impressions',right:true},{key:'clicks',label:'Clics',right:true},{key:'ctr',label:'CTR'},{key:'cpc',label:'CPC',right:true}],
+    adRows, 'Aucune publicité'
+  ).replace('<table>','').replace('</table>','')}</table>`;
+}
+
+function renderGscSection() {
+  const { queries, pages, quickWins } = mktData.gsc;
+
+  const qRows = (queries||[]).map(r => ({
+    query: `<span style="font-weight:500">${r.keys[0]}</span>`,
+    clicks: mktFmt(r.clicks,0),
+    impr: mktFmt(r.impressions,0),
+    ctr: mktCtrCell(r.ctr*100),
+    pos: `<span style="${r.position<=3?'color:var(--green);font-weight:600':r.position<=10?'':'color:var(--muted)'}">${mktFmt(r.position,1)}</span>`,
+  }));
+  document.getElementById('mkt-gsc-queries').outerHTML = `<table id="mkt-gsc-queries">${mktTable(
+    [{key:'query',label:'Requête'},{key:'clicks',label:'Clics',right:true},{key:'impr',label:'Impressions',right:true},{key:'ctr',label:'CTR'},{key:'pos',label:'Position',right:true}],
+    qRows, 'Pas encore de données'
+  ).replace('<table>','').replace('</table>','')}</table>`;
+
+  const pRows = (pages||[]).map(r => ({
+    page: `<span style="font-weight:500;font-size:12px">${r.keys[0].replace('https://lancio.fr','')}</span>`,
+    clicks: mktFmt(r.clicks,0),
+    impr: mktFmt(r.impressions,0),
+    ctr: mktCtrCell(r.ctr*100),
+    pos: mktFmt(r.position,1),
+  }));
+  document.getElementById('mkt-gsc-pages').outerHTML = `<table id="mkt-gsc-pages">${mktTable(
+    [{key:'page',label:'Page'},{key:'clicks',label:'Clics',right:true},{key:'impr',label:'Impressions',right:true},{key:'ctr',label:'CTR'},{key:'pos',label:'Position',right:true}],
+    pRows, 'Pas encore de données'
+  ).replace('<table>','').replace('</table>','')}</table>`;
+
+  const qwRows = (quickWins||[]).map(r => ({
+    query: `<span style="font-weight:600">${r.keys[0]}</span>`,
+    clicks: mktFmt(r.clicks,0),
+    impr: mktFmt(r.impressions,0),
+    ctr: mktCtrCell(r.ctr*100),
+    pos: `<span style="color:var(--amber);font-weight:600">${mktFmt(r.position,1)}</span>`,
+    action: `<span style="font-size:11px;color:var(--fr)">→ Optimiser la page</span>`,
+  }));
+  document.getElementById('mkt-gsc-quickwins').outerHTML = `<table id="mkt-gsc-quickwins">${mktTable(
+    [{key:'query',label:'Requête'},{key:'impr',label:'Impressions',right:true},{key:'clicks',label:'Clics',right:true},{key:'ctr',label:'CTR'},{key:'pos',label:'Position',right:true},{key:'action',label:'Action'}],
+    qwRows, '⚡ Aucun quick win identifié — continue à générer du contenu'
+  ).replace('<table>','').replace('</table>','')}</table>`;
+}
+
+async function runAiAnalysis() {
+  // Switch to AI tab
+  document.querySelectorAll('#page-marketing .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.mkt-panel').forEach(p => p.style.display = 'none');
+  document.querySelector('#page-marketing .tab:nth-child(3)').classList.add('active');
+  document.getElementById('mkt-panel-ai').style.display = 'block';
+
+  document.getElementById('mkt-ai-empty').style.display = 'none';
+  document.getElementById('mkt-ai-result').style.display = 'none';
+  document.getElementById('mkt-ai-loading').style.display = 'block';
+
+  try {
+    // Build summaries for Claude
+    let metaSummary = null;
+    if (mktData.meta) {
+      let spend=0, impr=0, clicks=0, reach=0;
+      const active = mktData.meta.campaigns.filter(c => c.status === 'ACTIVE');
+      mktData.meta.campaigns.forEach(c => {
+        const i = mktIns(c);
+        spend += parseFloat(i.spend||0);
+        impr += parseInt(i.impressions||0);
+        clicks += parseInt(i.clicks||0);
+        reach += parseInt(i.reach||0);
+      });
+      const ctr = impr > 0 ? (clicks/impr*100).toFixed(2) : 0;
+      const cpc = clicks > 0 ? (spend/clicks).toFixed(2) : 0;
+
+      const sorted = [...mktData.meta.campaigns]
+        .filter(c => mktIns(c).impressions > 0)
+        .sort((a,b) => parseFloat(mktIns(b).ctr||0) - parseFloat(mktIns(a).ctr||0));
+
+      metaSummary = {
+        spend: spend.toFixed(2), impressions: impr, clicks, ctr, cpc, reach,
+        activeCampaigns: active.length, totalCampaigns: mktData.meta.campaigns.length,
+        topCampaign: sorted[0] ? { name: sorted[0].name, ctr: parseFloat(mktIns(sorted[0]).ctr||0).toFixed(2) } : null,
+        worstCampaign: sorted[sorted.length-1] ? { name: sorted[sorted.length-1].name, ctr: parseFloat(mktIns(sorted[sorted.length-1]).ctr||0).toFixed(2) } : null,
+      };
+    }
+
+    let gscSummary = null;
+    if (mktData.gsc) {
+      const dates = mktData.gsc.dates || [];
+      const totalClicks = dates.reduce((s,r) => s+r.clicks, 0);
+      const totalImpr = dates.reduce((s,r) => s+r.impressions, 0);
+      const avgCtr = totalImpr > 0 ? (totalClicks/totalImpr*100).toFixed(2) : 0;
+      const avgPos = dates.length > 0 ? (dates.reduce((s,r) => s+r.position*r.impressions,0) / (totalImpr||1)).toFixed(1) : 0;
+      gscSummary = {
+        totalClicks, totalImpressions: totalImpr, avgCtr, avgPosition: avgPos,
+        topQuery: mktData.gsc.queries?.[0] ? { query: mktData.gsc.queries[0].keys[0], clicks: mktData.gsc.queries[0].clicks } : null,
+        pagesWithTraffic: (mktData.gsc.pages||[]).length,
+        quickWinsCount: (mktData.gsc.quickWins||[]).length,
+      };
+    }
+
+    const from = document.getElementById('mkt-from').value;
+    const to = document.getElementById('mkt-to').value;
+
+    const resp = await fetch('/.netlify/functions/ai-analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ metaData: metaSummary, gscData: gscSummary, period: `${from} → ${to}` }),
+    });
+    const result = await resp.json();
+    if (result.error) throw new Error(result.error);
+
+    renderAiResult(result.analysis, result.generatedAt);
+  } catch(e) {
+    document.getElementById('mkt-ai-loading').style.display = 'none';
+    document.getElementById('mkt-ai-result').style.display = 'block';
+    document.getElementById('mkt-ai-result').innerHTML = `<div style="color:var(--red);padding:20px">⚠ ${e.message}</div>`;
+  }
+}
+
+function renderAiResult(a, generatedAt) {
+  document.getElementById('mkt-ai-loading').style.display = 'none';
+  document.getElementById('mkt-ai-result').style.display = 'block';
+
+  const scoreColor = a.score >= 7 ? 'var(--green)' : a.score >= 4 ? 'var(--amber)' : 'var(--red)';
+  const date = generatedAt ? new Date(generatedAt).toLocaleString('fr-FR', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+
+  let html = `
+    <div style="display:flex;align-items:center;gap:20px;margin-bottom:24px;padding:20px;background:var(--bg);border-radius:var(--r2)">
+      <div class="score-ring" style="color:${scoreColor}">${a.score}/10</div>
+      <div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px">Score de santé marketing</div>
+        <div style="font-size:13px;color:var(--muted)">${a.resume || ''}</div>
+        ${date ? `<div style="font-size:11px;color:var(--hint);margin-top:6px">Généré le ${date}</div>` : ''}
+      </div>
+      <button class="btn" style="margin-left:auto;background:var(--accent);color:white;font-size:12px" onclick="runAiAnalysis()">↻ Relancer</button>
+    </div>`;
+
+  if (a.alertes?.length) {
+    html += `<div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--red);margin-bottom:10px">🚨 Alertes</div>
+      ${a.alertes.map(al => `<div style="background:var(--red-l);border:1px solid #F0CACA;border-radius:var(--r);padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--red)">⚠ ${al}</div>`).join('')}
+    </div>`;
+  }
+
+  if (a.quick_wins?.length) {
+    html += `<div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--fr);margin-bottom:10px">⚡ Cette semaine</div>
+      <div style="background:var(--fr-l);border:1px solid rgba(26,60,52,.15);border-radius:var(--r2);padding:16px 20px">
+        ${a.quick_wins.map((qw,i) => `<div style="display:flex;align-items:flex-start;gap:10px;${i>0?'margin-top:10px;padding-top:10px;border-top:1px solid rgba(26,60,52,.1)':''}">
+          <span style="color:var(--fr);font-weight:700;flex-shrink:0">${i+1}.</span>
+          <span style="font-size:13px">${qw}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  if (a.recommandations?.length) {
+    html += `<div>
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:12px">📋 Recommandations</div>
+      ${a.recommandations.map(r => `<div class="reco-card">
+        <span class="reco-prio prio-${r.priorite}">${r.priorite}</span>
+        <div>
+          <div class="reco-action">${r.action}</div>
+          <div class="reco-impact">💡 ${r.impact}</div>
+          <div class="reco-detail">${r.detail}</div>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  document.getElementById('mkt-ai-result').innerHTML = html;
+}
+</script>
+  
 /* ── MODAL ── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:flex-start;justify-content:flex-end;padding:16px}
 .overlay.open{display:flex}
@@ -194,6 +764,11 @@ tr.unread td:first-child::before{content:'';position:absolute;left:4px;top:50%;t
     <span>🧾</span> Facturation
   </div>
 
+<div class="nav-section">Marketing</div>
+<div class="nav-item lancio-item" onclick="nav('marketing')" id="nav-marketing">
+  <span>📈</span> Marketing
+</div>
+  
   <div class="nav-section">Vue globale</div>
   <div class="nav-item" onclick="nav('dashboard')" id="nav-dashboard">
     <span>◈</span> Dashboard

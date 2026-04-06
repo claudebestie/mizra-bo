@@ -14,7 +14,7 @@
   --blue:#2060A0;--blue-l:#E8F0F8;
   --red:#C03030;--red-l:#FCF0F0;
   --amber:#B07010;--amber-l:#FDF5E0;
-  --fr:#1A3C34;--fr-l:#E8F0EE;
+  --fr:#1A3C34;--fr-l:#E8F0EE;--rge:#2a7d4f;--rge-l:#e8f4ed;
   --r:8px;--r2:12px;--r3:20px;
   font-family:'Inter',system-ui,sans-serif;
 }
@@ -40,8 +40,10 @@ a{color:inherit;text-decoration:none}
 .nav-item:hover{background:var(--bg);color:var(--text)}
 .nav-item.active{background:var(--accent-l);color:var(--accent);font-weight:500}
 .nav-item.lancio-item.active{background:var(--fr-l);color:var(--fr)}
+.nav-item.rge-item.active{background:var(--rge-l);color:var(--rge)}
 .nav-badge{margin-left:auto;font-size:10px;font-weight:600;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;min-width:18px;text-align:center}
 .nav-badge.fr{background:var(--fr)}
+.nav-badge.rge{background:var(--rge)}
 
 /* ── MAIN CONTENT ── */
 .main{padding:24px;overflow-y:auto}
@@ -208,6 +210,12 @@ tr.unread td:first-child::before{content:'';position:absolute;left:4px;top:50%;t
     <span class="nav-badge fr" id="badge-lancio-onboarding">0</span>
   </div>
 
+  <div class="nav-section">VitrineRGE 🇫🇷</div>
+  <div class="nav-item rge-item" onclick="nav('vitrinerge')" id="nav-vitrinerge">
+    <span>🌿</span> Leads RGE
+    <span class="nav-badge rge" id="badge-vitrinerge">0</span>
+  </div>
+
   <div class="nav-section">Outils</div>
   <div class="nav-item" onclick="nav('facturation')" id="nav-facturation">
     <span>🧾</span> Facturation
@@ -349,6 +357,36 @@ tr.unread td:first-child::before{content:'';position:absolute;left:4px;top:50%;t
         <th>#</th><th>Client</th><th>Email</th><th>Secteur</th><th>Entreprise</th><th>Options</th><th>Total</th><th>Statut</th><th>Date</th>
       </tr></thead>
       <tbody id="body-lancio"></tbody></table>
+    </div>
+  </div>
+
+
+  <!-- ── VITRINERGE LEADS ── -->
+  <div class="page" id="page-vitrinerge">
+    <div class="lancio-header" style="background:var(--rge)">
+      <div>
+        <div class="lh-title">🌿 VitrineRGE — Leads Installateurs</div>
+        <div class="lh-sub">Demandes reçues via vitrinerge.fr</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="export-btn" style="border-color:rgba(255,255,255,.3);color:#fff;background:rgba(255,255,255,.1)" onclick="exportCSV('vitrinerge')">⬇ Export CSV</button>
+      </div>
+    </div>
+    <div class="page-header" style="margin-top:0;margin-bottom:16px">
+      <div class="page-title">Leads reçus <small id="vitrinerge-cnt">0</small></div>
+    </div>
+    <div class="filter-bar">
+      <button class="filter-btn active" style="--active-bg:var(--rge-l);--active-color:var(--rge);--active-border:var(--rge)" onclick="setFilter('vitrinerge','all',this)">Tous</button>
+      <button class="filter-btn" onclick="setFilter('vitrinerge','new',this)">Nouveaux</button>
+      <button class="filter-btn" onclick="setFilter('vitrinerge','contacted',this)">Contactés</button>
+      <button class="filter-btn" onclick="setFilter('vitrinerge','done',this)">Terminés</button>
+      <input class="search-input" id="search-vitrinerge" placeholder="Rechercher…" oninput="renderPage('vitrinerge')"/>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>#</th><th>Nom / Société</th><th>Email</th><th>Téléphone</th><th>Ville</th><th>Offre</th><th>Statut</th><th>Date</th>
+      </tr></thead>
+      <tbody id="body-vitrinerge"></tbody></table>
     </div>
   </div>
 
@@ -1294,8 +1332,8 @@ const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZi
 const H = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
 
 // ── State ──────────────────────────────────────────────────────────────────────
-let data = {messages:[],audits:[],orders:[],onboarding:[],lancio:[],'lancio-messages':[],'lancio-audits':[],'lancio-onboarding':[]};
-let filters = {messages:'all',audits:'all',orders:'all',onboarding:'all',lancio:'all','lancio-messages':'all','lancio-audits':'all','lancio-onboarding':'all'};
+let data = {messages:[],audits:[],orders:[],onboarding:[],lancio:[],'lancio-messages':[],'lancio-audits':[],'lancio-onboarding':[],vitrinerge:[]};
+let filters = {messages:'all',audits:'all',orders:'all',onboarding:'all',lancio:'all','lancio-messages':'all','lancio-audits':'all','lancio-onboarding':'all',vitrinerge:'all'};
 let currentPage = 'dashboard';
 let currentItem = null;
 
@@ -1308,7 +1346,7 @@ async function sb(table, params=''){
 
 async function loadAll(){
   document.getElementById('lastSync').textContent = 'Chargement…';
-  const [msg, aud, ord, onb, lan, lmsg, laud, lonb] = await Promise.all([
+  const [msg, aud, ord, onb, lan, lmsg, laud, lonb, vrge] = await Promise.all([
     sb('contact_leads'),
     sb('audit_requests'),
     sb('orders'),
@@ -1317,10 +1355,12 @@ async function loadAll(){
     sb('lancio_messages'),
     sb('lancio_audit_requests'),
     sb('lancio_onboarding'),
+    sb('leads_vitrinerge'),
   ]);
   data.messages = msg; data.audits = aud; data.orders = ord;
   data.onboarding = onb; data.lancio = lan;
   data['lancio-messages'] = lmsg; data['lancio-audits'] = laud; data['lancio-onboarding'] = lonb;
+  data.vitrinerge = vrge;
   updateBadges();
   renderDashboard();
   renderPage(currentPage);
@@ -1340,6 +1380,7 @@ function updateBadges(){
   document.getElementById('badge-lancio-messages').textContent = unread(data['lancio-messages'])||'';
   document.getElementById('badge-lancio-audits').textContent = unread(data['lancio-audits'])||'';
   document.getElementById('badge-lancio-onboarding').textContent = data['lancio-onboarding'].filter(x=>!x.done).length||'';
+  document.getElementById('badge-vitrinerge').textContent = data.vitrinerge.filter(x=>!x.seen).length||'';
 }
 
 // ── Navigation ──────────────────────────────────────────────────────────────────
@@ -1399,6 +1440,7 @@ function renderPage(page){
   else if(page==='lancio-messages') renderLancioMessages();
   else if(page==='lancio-audits') renderLancioAudits();
   else if(page==='lancio-onboarding') renderLancioOnboarding();
+  else if(page==='vitrinerge') renderVitrineRGE();
   else if(page==='stats') updateStats();
 }
 
@@ -1482,6 +1524,68 @@ function renderLancio(){
 }
 
 // ── Lancio Messages ────────────────────────────────────────────────────────────
+
+// ── VitrineRGE Leads ────────────────────────────────────────────────────────────
+function renderVitrineRGE(){
+  const d = getFiltered('vitrinerge');
+  const cnt = document.getElementById('vitrinerge-cnt');
+  if(cnt) cnt.textContent = d.length;
+  const b = document.getElementById('body-vitrinerge');
+  if(!b) return;
+  if(!d.length){b.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-ico">🌿</div>Aucun lead VitrineRGE reçu</div></td></tr>';return;}
+  b.innerHTML = d.map(l=>`<tr class="${!l.seen?'unread':''}" onclick="openVitrineRGEModal('${l.id}')">
+    <td style="font-size:11px;color:var(--hint);font-family:monospace">${ordNum(l.id)}</td>
+    <td class="tn">${l.nom||'—'}</td>
+    <td class="te">${l.email||'—'}</td>
+    <td style="font-size:13px">${l.telephone||'—'}</td>
+    <td style="font-size:13px;color:var(--muted)">${l.ville||'—'}</td>
+    <td style="font-size:12px"><span class="chip" style="background:var(--rge-l);color:var(--rge)">${l.offre||'Non précisé'}</span></td>
+    <td>${l.seen?'<span class="badge badge-done"><span class="dot"></span>Vu</span>':'<span class="badge badge-new"><span class="dot"></span>Nouveau</span>'}</td>
+    <td style="color:var(--hint);font-size:12px">${fmt(l.created_at)}</td>
+  </tr>`).join('');
+}
+
+function openVitrineRGEModal(id){
+  const l = data.vitrinerge.find(x=>x.id==id);
+  if(!l) return;
+  currentItem = {type:'vitrinerge', item:l};
+  if(!l.seen){ patch('vitrinerge',id,{seen:true}).then(()=>{ l.seen=true; updateBadges(); }); }
+  const title = document.getElementById('modal-title');
+  const body = document.getElementById('modal-body');
+  const footer = document.getElementById('modal-footer');
+  title.innerHTML = `<span style="color:var(--rge)">🌿</span> ${l.nom||'Lead RGE'} — <span style="font-size:13px;color:var(--muted)">${l.ville||''}</span>`;
+  body.innerHTML = `
+    <div class="modal-section">
+      <div class="modal-section-title">Contact</div>
+      <div class="field-row-m">
+        ${field('Nom / Société', l.nom)}
+        ${field('Ville', l.ville)}
+      </div>
+      <div class="field-row-m">
+        <div class="field-m"><label>Email</label><a href="mailto:${l.email}" style="color:var(--rge)">${l.email||'—'}</a></div>
+        <div class="field-m"><label>Téléphone</label><a href="tel:${l.telephone}" style="color:var(--rge);font-size:16px;font-weight:600">${l.telephone||'—'}</a></div>
+      </div>
+      ${field('Offre souhaitée', l.offre||'Non précisé')}
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Notes internes</div>
+      <div class="field-m"><textarea id="vrge-notes">${l.internal_notes||''}</textarea></div>
+    </div>`;
+  footer.innerHTML = `
+    <button class="btn btn-primary" style="background:var(--rge)" onclick="saveVitrineRGENotes('${l.id}')">💾 Sauvegarder</button>
+    <button class="btn btn-danger" onclick="deleteItem('vitrinerge','${l.id}')" style="margin-left:auto">🗑 Supprimer</button>`;
+  document.getElementById('overlay').classList.add('open');
+}
+
+async function saveVitrineRGENotes(id){
+  const notes = document.getElementById('vrge-notes').value;
+  await patch('vitrinerge', id, {internal_notes: notes});
+  const item = data.vitrinerge.find(x=>x.id==id);
+  if(item) item.internal_notes = notes;
+  showToast('Notes sauvegardées');
+  closeModal();
+}
+
 function renderLancioMessages(){
   const d = getFiltered('lancio-messages');
   document.getElementById('lancio-cnt') && (document.getElementById('lancio-cnt').textContent = '');
@@ -1850,7 +1954,7 @@ function renderLancioModal(l, title, body, footer){
 
 // ── Save helpers ──────────────────────────────────────────────────────────────────
 async function patch(table, id, payload){
-  const map = {messages:'contact_leads',audits:'audit_requests',orders:'orders',onboarding:'onboarding',lancio:'lancio_orders','lancio-messages':'lancio_messages','lancio-audits':'lancio_audit_requests','lancio-onboarding':'lancio_onboarding'};
+  const map = {messages:'contact_leads',audits:'audit_requests',orders:'orders',onboarding:'onboarding',lancio:'lancio_orders','lancio-messages':'lancio_messages','lancio-audits':'lancio_audit_requests','lancio-onboarding':'lancio_onboarding',vitrinerge:'leads_vitrinerge'};
   const t = map[table]||table;
   await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(payload)});
 }
@@ -1947,7 +2051,7 @@ setInterval(loadAll, 60000); // Auto-refresh every minute
 async function deleteItem(type, id){
   if(!confirm('Supprimer cet élément ? Cette action est irréversible.')) return;
   const map = {messages:'contact_leads',audits:'audit_requests',orders:'orders',onboarding:'onboarding',
-    lancio:'lancio_orders','lancio-messages':'lancio_messages','lancio-audits':'lancio_audit_requests','lancio-onboarding':'lancio_onboarding'};
+    lancio:'lancio_orders','lancio-messages':'lancio_messages','lancio-audits':'lancio_audit_requests','lancio-onboarding':'lancio_onboarding',vitrinerge:'leads_vitrinerge'};
   const table = map[type]||type;
   await fetch(`${SB}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:H});
   data[type] = data[type].filter(x=>x.id!=id);
